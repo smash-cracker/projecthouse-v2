@@ -38,15 +38,15 @@ html,body{
 }
 
 body{
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
   background:var(--paper);
   color:var(--ink);
   -webkit-font-smoothing:antialiased;
   transition: background .3s ease, color .3s ease;
 }
 
-button{
-  font-family:inherit;
-}
+.serif{font-family: var(--font-instrument-serif), serif; font-weight:400; letter-spacing:-.01em}
+.mono{font-family: var(--font-jetbrains-mono), monospace}
 
 a{
   color:inherit;
