@@ -120,11 +120,12 @@ function ThumbArt({ kind, accent, color }: { kind: string; accent: string; color
         {Array.from({ length: 48 }).map((_, i) => {
           const v = (Math.sin(i * 1.7) + 1) / 2;
           const useAccent = v > 0.7;
+          const alpha = (0.1 + v * 0.7).toFixed(3);
           return (
             <div
               key={i}
               style={{
-                background: useAccent ? accent : `rgba(42,47,184,${0.1 + v * 0.7})`,
+                background: useAccent ? accent : `rgba(42,47,184,${alpha})`,
                 borderRadius: 2,
               }}
             />
