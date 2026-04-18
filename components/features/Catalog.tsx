@@ -1,9 +1,101 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { CATEGORIES, PROJECTS } from "@/lib/data";
 import { ProjectCard } from "./ProjectCard";
+
+function CustomSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedTarget = options.find((o) => o.value === value) || options[0];
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          padding: "10px 36px 10px 16px",
+          borderRadius: 999,
+          border: "1px solid var(--line)",
+          background: "var(--card)",
+          color: "var(--ink)",
+          fontFamily: "inherit",
+          fontSize: 13,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          minWidth: 160,
+          textAlign: "left",
+        }}
+      >
+        <span style={{ flex: 1 }}>{selectedTarget.label}</span>
+        <svg 
+          width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ position: "absolute", right: 14, pointerEvents: "none", color: "var(--muted)" }}
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 6px)",
+            right: 0,
+            width: "100%",
+            minWidth: 180,
+            background: "var(--card)",
+            border: "1px solid var(--line)",
+            borderRadius: 16,
+            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+            padding: 6,
+            zIndex: 100,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2
+          }}
+        >
+          {options.map((o) => (
+            <button
+              key={o.value}
+              onClick={() => { onChange(o.value); setOpen(false); }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--line)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              style={{
+                padding: "8px 12px",
+                borderRadius: 10,
+                border: "none",
+                background: "transparent",
+                color: value === o.value ? "var(--ink)" : "var(--muted)",
+                fontFamily: "inherit",
+                fontSize: 13,
+                textAlign: "left",
+                cursor: "pointer",
+                fontWeight: value === o.value ? 500 : 400,
+                transition: "background 0.15s, color 0.15s"
+              }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Catalog() {
   const { accent, setOpenedProject } = useProjectHouse();
@@ -103,25 +195,16 @@ export function Catalog() {
                 </button>
               )}
             </div>
-            <select
+            <CustomSelect
               value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 999,
-                border: "1px solid var(--line)",
-                background: "var(--card)",
-                color: "var(--ink)",
-                fontFamily: "inherit",
-                fontSize: 13,
-                cursor: "pointer",
-              }}
-            >
-              <option value="popular">Most popular</option>
-              <option value="rated">Highest rated</option>
-              <option value="price-l">Price: low to high</option>
-              <option value="price-h">Price: high to low</option>
-            </select>
+              onChange={setSort}
+              options={[
+                { value: "popular", label: "Most popular" },
+                { value: "rated", label: "Highest rated" },
+                { value: "price-l", label: "Price: low to high" },
+                { value: "price-h", label: "Price: high to low" },
+              ]}
+            />
           </div>
         </div>
 

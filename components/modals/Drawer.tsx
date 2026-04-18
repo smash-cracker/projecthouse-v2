@@ -465,9 +465,29 @@ export function Drawer() {
           </button>
         </div>
 
-        <div style={{ position: "relative", height: 280, background: p.color, overflow: "hidden" }}>
-          <CardArt project={p} accent={accent} hover={true} />
-        </div>
+        {(() => {
+          const extractYouTubeID = (url?: string) => {
+            if (!url) return null;
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[7].length === 11) ? match[7] : null;
+          };
+          
+          const youtubeID = extractYouTubeID(p.youtubeLink) || "XHTrLYShBRQ"; // Fallback demo video if link is missing
+
+          return (
+            <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#000", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%" }}></div>
+              <iframe
+                className="w-full h-full object-cover object-center"
+                src={`https://www.youtube.com/embed/${youtubeID}?autoplay=1&mute=1&loop=1&playlist=${youtubeID}`}
+                style={{ zIndex: 10, width: "100%", height: "100%", border: "none" }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          );
+        })()}
 
         <div style={{ padding: "32px" }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
