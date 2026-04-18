@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root{
-  --accent: #D7FF3A;       /* lime */
+  --accent: #FF8A5C;       /* peach */
   --accent-ink: #0A0F2C;   /* text-on-accent */
   --ink: #0A0F2C;          /* deep indigo-near-black */
   --ink-2:#1B2356;

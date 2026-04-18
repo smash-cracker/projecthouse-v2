@@ -6,8 +6,8 @@ import { ArrowUpRight, Star } from "../ui/icons";
 import { PROJECTS } from "@/lib/data";
 
 function ThumbArt({ kind, accent, color }: { kind: string; accent: string; color: string }) {
-  const bg = color && color !== "#D7FF3A" ? color : "var(--indigo-deep)";
-  const fg = color === "#D7FF3A" ? "var(--ink)" : "#fff";
+  const bg = color && color !== "#FF8A5C" ? color : "var(--indigo-deep)";
+  const fg = color === "#FF8A5C" ? "var(--ink)" : "#fff";
   if (kind === "notebook") {
     return (
       <div style={{ flex: 1, background: "var(--paper-2)", padding: 10 }}>

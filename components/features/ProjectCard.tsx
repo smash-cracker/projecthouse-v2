@@ -5,7 +5,7 @@ import { CATEGORIES } from "@/lib/data";
 import { Star, ArrowUpRight } from "../ui/icons";
 
 export function CardArt({ project: p, accent, hover }: { project: any; accent: string; hover: boolean }) {
-  const light = p.color === "#D7FF3A";
+  const light = p.color === "#FF8A5C";
   const fg = light ? "var(--ink)" : "#ffffff";
   const sub = light ? "rgba(10,15,44,.55)" : "rgba(255,255,255,.6)";
   const tx = hover ? "scale(1.04)" : "scale(1)";
