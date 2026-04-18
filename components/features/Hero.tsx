@@ -290,7 +290,7 @@ export function Hero() {
         <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 56, marginTop: 44, alignItems: "end" }}>
           <div>
             <p style={{ fontSize: 18, lineHeight: 1.55, color: "var(--muted)", maxWidth: 520, margin: 0 }}>
-              ML, deep learning, computer vision, full-stack web, and mobile — every project ships with source, dataset,
+              Machine Learning, deep learning, computer vision, full-stack web, and mobile — every project ships with source, dataset,
               a viva-ready report, and a human to answer your doubts.
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 28, flexWrap: "wrap" }}>
