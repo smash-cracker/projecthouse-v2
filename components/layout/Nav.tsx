@@ -296,16 +296,6 @@ export function Nav() {
               Viva Prep
             </button>
             <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-              <button
-                style={{
-                  padding: "12px 18px", borderRadius: 999, border: "none",
-                  background: "var(--ink)", color: "var(--paper)",
-                  cursor: "pointer", fontSize: 14, fontWeight: 500,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                }}
-              >
-                Browse catalog <ArrowUpRight />
-              </button>
               {user ? (
                 <div>
                   <div style={{ padding: "10px 4px", borderBottom: "1px solid var(--line)", marginBottom: 4 }}>
