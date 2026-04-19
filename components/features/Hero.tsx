@@ -349,7 +349,7 @@ export function Hero() {
                 How it works →
               </button>
             </div>
-            <div style={{ display: "flex", gap: "clamp(20px,3.5vw,36px)", marginTop: 40, flexWrap: "wrap" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4, marginTop: 40 }}>
               {[
                 { n: "48", l: "Capstone-ready projects" },
                 { n: "150+", l: "Orders" },
