@@ -203,7 +203,7 @@ export function Nav() {
                             Signed in with {user.provider}
                           </div>
                         </div>
-                        {["My library", "Orders", "Account settings"].map((x) => (
+                        {["My projects", "Favorites"].map((x) => (
                           <a key={x} href="#" style={{ display: "block", padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
                             {x}
                           </a>
@@ -308,16 +308,30 @@ export function Nav() {
               </button>
               {user ? (
                 <div>
-                  <div style={{ padding: "10px 4px", borderBottom: "1px solid var(--line)", marginBottom: 8 }}>
+                  <div style={{ padding: "10px 4px", borderBottom: "1px solid var(--line)", marginBottom: 4 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</div>
                     <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{user.email}</div>
                   </div>
+                  {["My projects", "Favorites"].map((x) => (
+                    <a
+                      key={x}
+                      href="#"
+                      onClick={() => setMobileNavOpen(false)}
+                      style={{
+                        display: "block", padding: "10px 4px",
+                        borderBottom: "1px solid var(--line)",
+                        textDecoration: "none", color: "var(--ink)", fontSize: 14,
+                      }}
+                    >
+                      {x}
+                    </a>
+                  ))}
                   <button
                     onClick={() => { signOut(); setMobileNavOpen(false); }}
                     style={{
                       width: "100%", textAlign: "left", padding: "10px 4px",
                       background: "none", border: "none", color: "var(--muted)",
-                      fontSize: 14, cursor: "pointer", fontFamily: "inherit",
+                      fontSize: 14, cursor: "pointer", fontFamily: "inherit", marginTop: 4,
                     }}
                   >
                     Sign out
