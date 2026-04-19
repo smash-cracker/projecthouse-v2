@@ -85,7 +85,8 @@ const TypingDots = () => (
   </span>
 );
 
-function ChatPanel({ accent, isMobile }: { accent: string; isMobile: boolean }) {
+function ChatPanel({ accent }: { accent: string }) {
+  const isMobile = useIsMobile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -115,6 +116,7 @@ function ChatPanel({ accent, isMobile }: { accent: string; isMobile: boolean }) 
         body: JSON.stringify({ messages: next }),
       });
 
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       if (!res.body) throw new Error("No response body");
 
       const reader = res.body.getReader();
@@ -127,13 +129,28 @@ function ChatPanel({ accent, isMobile }: { accent: string; isMobile: boolean }) 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        assistantText += decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value, { stream: true });
+
+        // Server signals a stream-level error
+        if (chunk.startsWith("__ERROR__:")) {
+          assistantText = "Sorry, I couldn't reach the AI. Please try again shortly.";
+          break;
+        }
+
+        assistantText += chunk;
         setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = { role: "assistant", content: assistantText };
           return updated;
         });
       }
+
+      // Ensure final content is set
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: "assistant", content: assistantText || "Sorry, I couldn't reach the AI. Please try again shortly." };
+        return updated;
+      });
     } catch {
       setLoading(false);
       setMessages((prev) => [
@@ -497,7 +514,7 @@ export function VivaModal() {
         {/* Content area */}
         {isBot ? (
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <ChatPanel accent={accent} isMobile={isMobile} />
+            <ChatPanel accent={accent} />
           </div>
         ) : (
           <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px" : "24px 32px" }}>

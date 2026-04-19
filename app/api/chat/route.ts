@@ -25,28 +25,42 @@ You are NOT a general-purpose assistant. Politely redirect off-topic questions b
 export async function POST(request: Request) {
   const { messages } = await request.json();
 
-  const stream = client.messages.stream({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    messages,
-  });
+  try {
+    const stream = client.messages.stream({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      messages,
+    });
 
-  const readableStream = new ReadableStream({
-    async start(controller) {
-      for await (const chunk of stream) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          controller.enqueue(new TextEncoder().encode(chunk.delta.text));
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            if (
+              chunk.type === "content_block_delta" &&
+              chunk.delta.type === "text_delta"
+            ) {
+              controller.enqueue(new TextEncoder().encode(chunk.delta.text));
+            }
+          }
+          controller.close();
+        } catch (streamErr) {
+          const msg = streamErr instanceof Error ? streamErr.message : "Stream error";
+          controller.enqueue(new TextEncoder().encode(`__ERROR__:${msg}`));
+          controller.close();
         }
-      }
-      controller.close();
-    },
-  });
+      },
+    });
 
-  return new Response(readableStream, {
-    headers: { "Content-Type": "text/plain; charset=utf-8" },
-  });
+    return new Response(readableStream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }
