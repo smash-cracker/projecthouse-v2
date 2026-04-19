@@ -53,8 +53,17 @@ function supabaseUserToUser(sbUser: any): User | null {
   };
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [dark, setDark] = useState(false);
+// Helper: read a cookie by name on the client
+function getClientCookie(name: string): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  return document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(name + "="))
+    ?.split("=")[1];
+}
+
+export function ThemeProvider({ children, initialTheme }: { children: React.ReactNode; initialTheme?: string }) {
+  const [dark, setDark] = useState(initialTheme === "dark");
   const [accent, setAccentState] = useState(TWEAK_DEFAULTS.accent);
   const [openedProject, setOpenedProject] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -63,9 +72,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [authOpen, setAuthOpen] = useState(false);
   const [vivaOpen, setVivaOpen] = useState(false);
 
+  // Sync from cookie on first client render (handles cases where cookie wasn't passed from server)
   useEffect(() => {
-    const s = localStorage.getItem("ph-theme");
-    if (s) setDark(s === "dark");
+    const saved = getClientCookie("ph-theme");
+    if (saved) setDark(saved === "dark");
   }, []);
 
   useEffect(() => {
@@ -84,7 +94,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
-    localStorage.setItem("ph-theme", dark ? "dark" : "light");
+    // 1-year cookie, readable by the Next.js server on every request
+    document.cookie = `ph-theme=${dark ? "dark" : "light"}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
   }, [dark]);
 
   useEffect(() => {
