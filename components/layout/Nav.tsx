@@ -6,7 +6,7 @@ import { Logo, ArrowUpRight } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function Nav() {
-  const { dark, setDark, setSearchOpen, accent, user, setAuthOpen, signOut, setVivaOpen } = useProjectHouse();
+  const { dark, setDark, setSearchOpen, accent, user, setAuthOpen, signOut } = useProjectHouse();
   const [progress, setProgress] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -72,16 +72,15 @@ export function Nav() {
                 {x}
               </a>
             ))}
-            <button
-              onClick={() => setVivaOpen(true)}
+            <a
+              href="/viva"
               style={{
-                padding: "10px 14px", borderRadius: 999, border: "none", background: "transparent",
-                fontFamily: "inherit", fontSize: 14, color: "var(--ink)", cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 5,
+                padding: "10px 14px", borderRadius: 999,
+                textDecoration: "none", color: "var(--ink)", fontSize: 14,
               }}
             >
               Viva Prep
-            </button>
+            </a>
           </nav>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -299,17 +298,17 @@ export function Nav() {
                 {x}
               </a>
             ))}
-            <button
-              onClick={() => { setVivaOpen(true); setMobileNavOpen(false); }}
+            <a
+              href="/viva"
+              onClick={() => setMobileNavOpen(false)}
               style={{
-                display: "block", width: "100%", textAlign: "left",
-                padding: "12px 4px",
-                background: "none", border: "none", borderBottom: "1px solid var(--line)",
-                color: "var(--ink)", fontSize: 15, cursor: "pointer", fontFamily: "inherit",
+                display: "block", padding: "12px 4px",
+                borderBottom: "1px solid var(--line)",
+                textDecoration: "none", color: "var(--ink)", fontSize: 15,
               }}
             >
               Viva Prep
-            </button>
+            </a>
             <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
               {user ? (
                 <div>
