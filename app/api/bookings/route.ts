@@ -17,11 +17,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  // Check slot not already taken
+  // Check slot not already taken (shared across all projects)
   const { data: existing } = await supabase
     .from("demo_bookings")
     .select("id")
-    .eq("project_id", project_id)
     .eq("slot_date", slot_date)
     .eq("slot_time", slot_time)
     .neq("status", "cancelled")
@@ -53,14 +52,13 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ booking: data }, { status: 201 });
 }
 
-// GET /api/bookings?project_id=X&date=Y — return booked slots for availability
+// GET /api/bookings?date=Y — return booked slots for a date (shared across all projects)
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const project_id = searchParams.get("project_id");
   const date = searchParams.get("date");
 
-  if (!project_id || !date) {
-    return NextResponse.json({ error: "Missing project_id or date" }, { status: 400 });
+  if (!date) {
+    return NextResponse.json({ error: "Missing date" }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -68,7 +66,6 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from("demo_bookings")
     .select("slot_time")
-    .eq("project_id", project_id)
     .eq("slot_date", date)
     .neq("status", "cancelled");
 

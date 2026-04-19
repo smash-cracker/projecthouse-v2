@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
@@ -40,7 +40,7 @@ export function DemoModal({ project, onClose, accent }: { project: any; onClose:
     if (!project || !days[dayIdx]) return;
     const dateStr = days[dayIdx].toISOString().slice(0, 10);
     setLoadingSlots(true);
-    fetch(`/api/bookings?project_id=${encodeURIComponent(project.id)}&date=${dateStr}`)
+    fetch(`/api/bookings?date=${dateStr}`)
       .then((r) => r.json())
       .then((data) => setBookedSlots(data.booked || []))
       .catch(() => setBookedSlots([]))
