@@ -2,9 +2,11 @@
 
 import React, { useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
+import { createClient } from "@/utils/supabase/client";
 
 export function AuthModal() {
-  const { authOpen: open, setAuthOpen: onClose, setUser, accent } = useProjectHouse();
+  const { authOpen: open, setAuthOpen: onClose, accent } = useProjectHouse();
+  const supabase = createClient();
 
   useEffect(() => {
     if (!open) return;
@@ -15,16 +17,13 @@ export function AuthModal() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  const signIn = (provider: string) => {
-    // Mock OAuth — in real build, redirects to /auth/google or /auth/github
-    const profiles: Record<string, any> = {
-      google: { provider: "google", name: "Aarav Mehta", email: "aarav.mehta@gmail.com", handle: "aarav.mehta", avatar: "AM" },
-      github: { provider: "github", name: "Aarav Mehta", email: "aarav@users.noreply.github.com", handle: "aaravmehta", avatar: "AM" },
-    };
-    const u = profiles[provider];
-    setUser(u);
-    localStorage.setItem("ph-user", JSON.stringify(u));
-    onClose(false);
+  const signIn = async (provider: "google" | "github") => {
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
   };
 
   if (!open) return null;

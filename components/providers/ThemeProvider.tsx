@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { TWEAK_DEFAULTS } from "@/lib/data";
+import { createClient } from "@/utils/supabase/client";
 
 interface User {
   provider: string;
@@ -31,6 +32,25 @@ interface ProjectHouseState {
 
 const ProjectHouseContext = createContext<ProjectHouseState | undefined>(undefined);
 
+function supabaseUserToUser(sbUser: any): User | null {
+  if (!sbUser) return null;
+  const meta = sbUser.user_metadata ?? {};
+  const name = meta.full_name ?? meta.name ?? meta.user_name ?? sbUser.email ?? "User";
+  const initials = name
+    .split(" ")
+    .map((w: string) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return {
+    provider: sbUser.app_metadata?.provider ?? "email",
+    name,
+    email: sbUser.email ?? "",
+    handle: meta.user_name ?? meta.preferred_username ?? sbUser.email ?? "",
+    avatar: initials,
+  };
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [dark, setDark] = useState(false);
   const [accent, setAccentState] = useState(TWEAK_DEFAULTS.accent);
@@ -43,12 +63,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const s = localStorage.getItem("ph-theme");
     if (s) setDark(s === "dark");
-    const u = localStorage.getItem("ph-user");
-    if (u) {
-      try {
-        setUser(JSON.parse(u));
-      } catch {}
-    }
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    supabase.auth.getUser().then(({ data: { user: sbUser } }) => {
+      setUser(supabaseUserToUser(sbUser));
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(supabaseUserToUser(session?.user ?? null));
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -91,8 +119,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = () => {
-    setUser(null);
-    localStorage.removeItem("ph-user");
+    const supabase = createClient();
+    supabase.auth.signOut();
   };
 
   return (
