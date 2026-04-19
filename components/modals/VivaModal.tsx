@@ -359,7 +359,7 @@ function ChatPanel({ accent }: { accent: string }) {
 // ——— Main Viva Modal ——————————————————————————————————————
 
 export function VivaModal() {
-  const { vivaOpen, setVivaOpen, accent } = useProjectHouse();
+  const { vivaOpen, setVivaOpen, accent, user, setAuthOpen } = useProjectHouse();
   const isMobile = useIsMobile();
   const [tab, setTab] = useState("ml");
   const [query, setQuery] = useState("");
@@ -512,7 +512,37 @@ export function VivaModal() {
         {/* Content area */}
         {isBot ? (
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <ChatPanel accent={accent} />
+            {!user ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: 32, textAlign: "center" }}>
+                <div style={{ width: 64, height: 64, borderRadius: 20, background: accent, display: "grid", placeItems: "center", boxShadow: `0 8px 24px ${accent}55`, marginBottom: 20 }}>
+                  <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
+                    <rect x="3" y="6" width="14" height="10" rx="3" fill="var(--accent-ink)" opacity=".15" stroke="var(--accent-ink)" strokeWidth="1.4"/>
+                    <circle cx="7.5" cy="11" r="1.4" fill="var(--accent-ink)"/>
+                    <circle cx="12.5" cy="11" r="1.4" fill="var(--accent-ink)"/>
+                    <path d="M7 6V4.5a3 3 0 016 0V6" stroke="var(--accent-ink)" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-.01em" }}>Sign in to Ask Bot</div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6, lineHeight: 1.6, maxWidth: 320, marginBottom: 24 }}>
+                  Ask me anything about your project — methodology, results, or how to handle tough viva questions.
+                </div>
+                <button
+                  onClick={() => setAuthOpen(true)}
+                  style={{
+                    padding: "10px 24px", borderRadius: 999, border: "none",
+                    background: accent, color: "var(--accent-ink)",
+                    fontFamily: "inherit", fontSize: 13, fontWeight: 600,
+                    cursor: "pointer", transition: "opacity .15s"
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                >
+                  Sign In to Continue
+                </button>
+              </div>
+            ) : (
+              <ChatPanel accent={accent} />
+            )}
           </div>
         ) : (
           <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px" : "24px 32px" }}>
