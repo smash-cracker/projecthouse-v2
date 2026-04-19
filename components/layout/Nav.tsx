@@ -197,7 +197,16 @@ export function Nav() {
                         }}
                       >
                         <div style={{ padding: "10px 12px 12px", borderBottom: "1px solid var(--line)", marginBottom: 6 }}>
-                          <div style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</span>
+                            {user.isAdmin && (
+                              <span style={{
+                                fontSize: 9, fontWeight: 700, letterSpacing: ".08em",
+                                textTransform: "uppercase", padding: "2px 6px",
+                                borderRadius: 4, background: accent, color: "var(--accent-ink)",
+                              }}>Admin</span>
+                            )}
+                          </div>
                           <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2, wordBreak: "break-all" }}>{user.email}</div>
                           <div className="mono" style={{ fontSize: 10, color: "var(--muted)", marginTop: 6, letterSpacing: ".1em", textTransform: "uppercase" }}>
                             Signed in with {user.provider}
@@ -299,7 +308,16 @@ export function Nav() {
               {user ? (
                 <div>
                   <div style={{ padding: "10px 4px", borderBottom: "1px solid var(--line)", marginBottom: 4 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</span>
+                      {user.isAdmin && (
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, letterSpacing: ".08em",
+                          textTransform: "uppercase", padding: "2px 6px",
+                          borderRadius: 4, background: accent, color: "var(--accent-ink)",
+                        }}>Admin</span>
+                      )}
+                    </div>
                     <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{user.email}</div>
                   </div>
                   {["My projects", "Favorites"].map((x) => (
