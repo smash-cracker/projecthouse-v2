@@ -4,12 +4,14 @@ import React from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { BUNDLES } from "@/lib/data";
 import { ArrowUpRight } from "../ui/icons";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function Pricing() {
   const { accent } = useProjectHouse();
+  const isMobile = useIsMobile();
 
   return (
-    <section id="pricing" style={{ padding: "100px 28px" }}>
+    <section id="pricing" style={{ padding: isMobile ? "60px 16px" : "100px 28px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <div style={{ maxWidth: 780 }}>
           <div
@@ -20,16 +22,23 @@ export function Pricing() {
           </div>
           <h2
             className="serif"
-            style={{ fontSize: "clamp(44px,5.2vw,78px)", lineHeight: 1, margin: "12px 0 18px", letterSpacing: "-.02em" }}
+            style={{ fontSize: "clamp(36px,5.2vw,78px)", lineHeight: 1, margin: "12px 0 18px", letterSpacing: "-.02em" }}
           >
             Pick one. Pack three. Or license the lot.
           </h2>
-          <p style={{ fontSize: 18, color: "var(--muted)", lineHeight: 1.55, margin: 0, maxWidth: 620 }}>
+          <p style={{ fontSize: isMobile ? 16 : 18, color: "var(--muted)", lineHeight: 1.55, margin: 0, maxWidth: 620 }}>
             One-time payments. No subscriptions. Every project comes with lifetime access to its updates.
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginTop: 48 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)",
+            gap: 16,
+            marginTop: 48,
+          }}
+        >
           {BUNDLES.map((b) => {
             const feat = b.featured;
             return (
@@ -41,10 +50,10 @@ export function Pricing() {
                   color: feat ? "var(--paper)" : "var(--ink)",
                   border: feat ? "1px solid var(--ink)" : "1px solid var(--line)",
                   borderRadius: 22,
-                  padding: 32,
+                  padding: isMobile ? 24 : 32,
                   display: "flex",
                   flexDirection: "column",
-                  minHeight: 500,
+                  minHeight: isMobile ? undefined : 500,
                 }}
               >
                 {feat && (
@@ -83,7 +92,7 @@ export function Pricing() {
                   </div>
                 </div>
                 <div style={{ marginTop: 24, display: "flex", alignItems: "baseline", gap: 6 }}>
-                  <span className="serif" style={{ fontSize: 72, lineHeight: 0.95, letterSpacing: "-.04em" }}>
+                  <span className="serif" style={{ fontSize: isMobile ? 52 : 72, lineHeight: 0.95, letterSpacing: "-.04em" }}>
                     ₹{b.price.toLocaleString("en-IN")}
                   </span>
                   <span style={{ fontSize: 13, color: feat ? "rgba(255,255,255,.6)" : "var(--muted)" }}>one-time</span>
@@ -159,19 +168,19 @@ export function Pricing() {
         <div
           style={{
             marginTop: 28,
-            padding: "22px 28px",
+            padding: isMobile ? "18px 16px" : "22px 28px",
             border: "1px dashed var(--line)",
             borderRadius: 16,
             display: "flex",
-            alignItems: "center",
+            alignItems: isMobile ? "start" : "center",
             justifyContent: "space-between",
             gap: 20,
-            flexWrap: "wrap",
+            flexDirection: isMobile ? "column" : "row",
           }}
         >
           <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
             <div
-              style={{ width: 42, height: 42, borderRadius: "50%", background: accent, display: "grid", placeItems: "center" }}
+              style={{ width: 42, height: 42, borderRadius: "50%", background: accent, display: "grid", placeItems: "center", flexShrink: 0 }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16">
                 <path d="M8 1l2 4.5L15 6l-3.5 3.5L12 15 8 12l-4 3 .5-5.5L1 6l5-.5L8 1z" fill="var(--accent-ink)" />
@@ -194,6 +203,7 @@ export function Pricing() {
               cursor: "pointer",
               fontSize: 13,
               color: "var(--ink)",
+              whiteSpace: "nowrap",
             }}
           >
             How verification works →

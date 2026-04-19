@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { VIVA_TABS, VIVA_QA } from "@/lib/data";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 // ——— Chat panel ——————————————————————————————————————————
 
@@ -340,6 +341,7 @@ function ChatPanel({ accent }: { accent: string }) {
 
 export function VivaModal() {
   const { vivaOpen, setVivaOpen, accent } = useProjectHouse();
+  const isMobile = useIsMobile();
   const [tab, setTab] = useState("ml");
   const [query, setQuery] = useState("");
   const [openIdx, setOpenIdx] = useState<number | null>(null);
@@ -410,9 +412,35 @@ export function VivaModal() {
         </button>
       </div>
 
+      {/* Mobile horizontal tab strip */}
+      {isMobile && (
+        <div style={{ borderBottom: "1px solid var(--line)", overflowX: "auto", display: "flex", gap: 4, padding: "8px 12px", flexShrink: 0, whiteSpace: "nowrap" }}>
+          {[...VIVA_TABS, { id: "bot", label: "Ask Bot", icon: "🤖" }].map((t) => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => switchTab(t.id)}
+                style={{
+                  padding: "7px 12px", borderRadius: 999, border: "none", flexShrink: 0,
+                  background: active ? accent : "var(--card)",
+                  color: active ? "var(--accent-ink)" : "var(--ink)",
+                  fontFamily: "inherit", fontSize: 13, fontWeight: active ? 600 : 400,
+                  cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
+                }}
+              >
+                <span>{t.icon}</span>
+                <span>{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
-        {/* Sidebar */}
+        {/* Sidebar — desktop only */}
+        {!isMobile && (
         <div style={{ width: 220, borderRight: "1px solid var(--line)", padding: "16px 12px", display: "flex", flexDirection: "column", gap: 4, flexShrink: 0, overflowY: "auto" }}>
           {VIVA_TABS.map((t) => {
             const active = tab === t.id;
@@ -462,6 +490,7 @@ export function VivaModal() {
             }}>AI</span>
           </button>
         </div>
+        )}
 
         {/* Content area */}
         {isBot ? (
@@ -469,7 +498,7 @@ export function VivaModal() {
             <ChatPanel accent={accent} />
           </div>
         ) : (
-          <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
+          <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px" : "24px 32px" }}>
             {isSearching && (
               <div style={{ marginBottom: 20, fontSize: 13, color: "var(--muted)" }}>
                 {items.length} result{items.length !== 1 ? "s" : ""} for <strong style={{ color: "var(--ink)" }}>"{query}"</strong>

@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { ArrowUpRight } from "../ui/icons";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function Contact() {
   const { accent } = useProjectHouse();
   const [copied, setCopied] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const copy = (text: string, key: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -79,9 +81,16 @@ export function Contact() {
   ];
 
   return (
-    <section id="contact" style={{ padding: "100px 28px" }}>
+    <section id="contact" style={{ padding: isMobile ? "60px 16px" : "100px 28px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 60, alignItems: "end" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1.3fr",
+            gap: isMobile ? 16 : 60,
+            alignItems: "end",
+          }}
+        >
           <div>
             <div
               className="mono"
@@ -91,17 +100,24 @@ export function Contact() {
             </div>
             <h2
               className="serif"
-              style={{ fontSize: "clamp(44px,5.2vw,78px)", lineHeight: 1, margin: "12px 0 0", letterSpacing: "-.02em" }}
+              style={{ fontSize: "clamp(32px,5.2vw,78px)", lineHeight: 1, margin: "12px 0 0", letterSpacing: "-.02em" }}
             >
               Talk to a human. <span style={{ fontStyle: "italic" }}>Before</span> you buy.
             </h2>
           </div>
-          <p style={{ fontSize: 17, color: "var(--muted)", lineHeight: 1.6, margin: 0, maxWidth: 520, justifySelf: "end" }}>
+          <p style={{ fontSize: isMobile ? 15 : 17, color: "var(--muted)", lineHeight: 1.6, margin: 0, maxWidth: 520 }}>
             Four ways to reach us — WhatsApp for quick questions, Telegram for release drops, phone when you need a voice, email for paperwork. Average reply time is under 12 hours.
           </p>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginTop: 48 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)",
+            gap: 14,
+            marginTop: 48,
+          }}
+        >
           {handles.map((h) => (
             <div
               key={h.id}
@@ -109,11 +125,11 @@ export function Contact() {
                 background: h.bg,
                 color: h.ink,
                 borderRadius: 20,
-                padding: 24,
+                padding: isMobile ? 16 : 24,
                 display: "flex",
                 flexDirection: "column",
-                gap: 16,
-                minHeight: 240,
+                gap: 12,
+                minHeight: isMobile ? undefined : 240,
                 border: h.bg === "#F6F4EE" ? "1px solid var(--line)" : "none",
                 position: "relative",
                 overflow: "hidden",
@@ -121,13 +137,14 @@ export function Contact() {
             >
               <div
                 style={{
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   borderRadius: 12,
                   background: "rgba(255,255,255,.15)",
                   display: "grid",
                   placeItems: "center",
                   backdropFilter: "blur(6px)",
+                  flexShrink: 0,
                 }}
               >
                 {h.icon}
@@ -135,14 +152,16 @@ export function Contact() {
               <div style={{ flex: 1 }}>
                 <div
                   className="mono"
-                  style={{ fontSize: 11, letterSpacing: ".15em", textTransform: "uppercase", opacity: 0.65 }}
+                  style={{ fontSize: 10, letterSpacing: ".15em", textTransform: "uppercase", opacity: 0.65 }}
                 >
                   {h.name}
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 600, marginTop: 6, letterSpacing: "-.01em", wordBreak: "break-word" }}>
+                <div style={{ fontSize: isMobile ? 13 : 18, fontWeight: 600, marginTop: 4, letterSpacing: "-.01em", wordBreak: "break-word" }}>
                   {h.handle}
                 </div>
-                <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6, lineHeight: 1.5 }}>{h.sub}</div>
+                {!isMobile && (
+                  <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6, lineHeight: 1.5 }}>{h.sub}</div>
+                )}
               </div>
               <div style={{ display: "flex", gap: 6 }}>
                 <a
@@ -151,48 +170,50 @@ export function Contact() {
                   rel="noreferrer"
                   style={{
                     flex: 1,
-                    padding: "11px 14px",
+                    padding: "10px 12px",
                     borderRadius: 999,
                     background: h.ink,
                     color: h.bg,
-                    fontSize: 13,
+                    fontSize: isMobile ? 12 : 13,
                     fontWeight: 500,
                     textDecoration: "none",
                     textAlign: "center",
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: 6,
+                    gap: 4,
                   }}
                 >
                   {h.cta} <ArrowUpRight />
                 </a>
-                <button
-                  onClick={() => copy(h.handle, h.id)}
-                  aria-label="Copy"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 999,
-                    border: `1px solid ${h.ink}33`,
-                    background: "transparent",
-                    color: h.ink,
-                    cursor: "pointer",
-                    display: "grid",
-                    placeItems: "center",
-                  }}
-                >
-                  {copied === h.id ? (
-                    <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
-                      <path d="M1 5l3.5 3.5L12 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : (
-                    <svg width="13" height="14" viewBox="0 0 13 14" fill="none">
-                      <rect x="3.5" y="1" width="8" height="9" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
-                      <path d="M2 4h-.5A.5.5 0 001 4.5V13a.5.5 0 00.5.5H9" stroke="currentColor" strokeWidth="1.3" />
-                    </svg>
-                  )}
-                </button>
+                {!isMobile && (
+                  <button
+                    onClick={() => copy(h.handle, h.id)}
+                    aria-label="Copy"
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 999,
+                      border: `1px solid ${h.ink}33`,
+                      background: "transparent",
+                      color: h.ink,
+                      cursor: "pointer",
+                      display: "grid",
+                      placeItems: "center",
+                    }}
+                  >
+                    {copied === h.id ? (
+                      <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+                        <path d="M1 5l3.5 3.5L12 1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : (
+                      <svg width="13" height="14" viewBox="0 0 13 14" fill="none">
+                        <rect x="3.5" y="1" width="8" height="9" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+                        <path d="M2 4h-.5A.5.5 0 001 4.5V13a.5.5 0 00.5.5H9" stroke="currentColor" strokeWidth="1.3" />
+                      </svg>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -201,20 +222,21 @@ export function Contact() {
         <div
           style={{
             marginTop: 28,
-            padding: "22px 28px",
+            padding: isMobile ? "18px 16px" : "22px 28px",
             borderRadius: 16,
             background: "var(--card)",
             border: "1px solid var(--line)",
             display: "flex",
-            alignItems: "center",
+            alignItems: isMobile ? "start" : "center",
             justifyContent: "space-between",
             gap: 20,
+            flexDirection: isMobile ? "column" : "row",
             flexWrap: "wrap",
           }}
         >
           <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
             <div
-              style={{ width: 42, height: 42, borderRadius: "50%", background: accent, display: "grid", placeItems: "center" }}
+              style={{ width: 42, height: 42, borderRadius: "50%", background: accent, display: "grid", placeItems: "center", flexShrink: 0 }}
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <circle cx="9" cy="9" r="7" stroke="var(--accent-ink)" strokeWidth="1.6" />
@@ -242,6 +264,7 @@ export function Contact() {
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
+              whiteSpace: "nowrap",
             }}
           >
             Schedule a call <ArrowUpRight />

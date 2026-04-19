@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { CATEGORIES, STACKS, ABSTRACTS, ADD_ONS, ADD_ONS_INIT, ADD_ONS_FULL } from "@/lib/data";
 import { ArrowUpRight, Star } from "../ui/icons";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 import { DemoModal } from "./DemoModal";
 import { jsPDF } from "jspdf";
@@ -401,6 +402,7 @@ export function Drawer() {
   const [tab, setTab] = useState("overview");
   const [demoOpen, setDemoOpen] = useState(false);
   const [sel, setSel] = useState<Record<string, boolean>>(ADD_ONS_INIT);
+  const isMobile = useIsMobile();
 
   const toggleAddon = (id: string) => {
     if (ADD_ONS.find((i) => i.id === id)?.required) return;
@@ -451,7 +453,7 @@ export function Drawer() {
       >
         <div
           style={{
-            padding: "22px 32px",
+            padding: isMobile ? "14px 16px" : "22px 32px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -498,7 +500,7 @@ export function Drawer() {
           );
         })()}
 
-        <div style={{ padding: "32px" }}>
+        <div style={{ padding: isMobile ? "16px" : "32px" }}>
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             <span className="mono" style={{ fontSize: 11, padding: "3px 8px", borderRadius: 4, background: "var(--paper-2)", color: "var(--muted)" }}>
               {p.level}
@@ -510,7 +512,7 @@ export function Drawer() {
               <Star /> {p.rating.toFixed(1)} · {p.downloads.toLocaleString()}
             </span>
           </div>
-          <h2 className="serif" style={{ fontSize: 48, lineHeight: 1.02, margin: 0, letterSpacing: "-.02em" }}>
+          <h2 className="serif" style={{ fontSize: isMobile ? 30 : 48, lineHeight: 1.02, margin: 0, letterSpacing: "-.02em" }}>
             {p.title}
           </h2>
           <p style={{ fontSize: 16, color: "var(--muted)", lineHeight: 1.6, marginTop: 14 }}>{p.desc}</p>
@@ -551,7 +553,7 @@ export function Drawer() {
 
           <div style={{ marginTop: 24, minHeight: 220 }}>
             {tab === "overview" && (
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
                 {ADD_ONS.map((item) => {
                   const on = sel[item.id];
                   return (
@@ -623,10 +625,11 @@ export function Drawer() {
             bottom: 0,
             background: "var(--paper)",
             borderTop: "1px solid var(--line)",
-            padding: "18px 32px",
+            padding: isMobile ? "14px 16px" : "18px 32px",
             display: "flex",
+            flexDirection: isMobile ? "column" : "row",
             justifyContent: "space-between",
-            alignItems: "center",
+            alignItems: isMobile ? "stretch" : "center",
             gap: 16,
           }}
         >

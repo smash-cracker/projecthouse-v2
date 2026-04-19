@@ -3,17 +3,19 @@
 import React from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { Logo } from "../ui/icons";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function Footer() {
   const { accent } = useProjectHouse();
+  const isMobile = useIsMobile();
 
   return (
     <footer style={{ background: "#0A0F2C", color: "#F3F0E6", marginTop: 60 }}>
-      <div style={{ maxWidth: 1320, margin: "0 auto", padding: "90px 28px 40px" }}>
+      <div style={{ maxWidth: 1320, margin: "0 auto", padding: isMobile ? "60px 16px 32px" : "90px 28px 40px" }}>
         <h3
           className="serif"
           style={{
-            fontSize: "clamp(52px,7vw,120px)",
+            fontSize: isMobile ? "clamp(38px,10vw,72px)" : "clamp(52px,7vw,120px)",
             lineHeight: 0.95,
             letterSpacing: "-.03em",
             margin: 0,
@@ -25,14 +27,14 @@ export function Footer() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr",
-            gap: 48,
-            marginTop: 72,
+            gridTemplateColumns: isMobile ? "1fr 1fr" : "2fr 1fr 1fr 1fr",
+            gap: isMobile ? 32 : 48,
+            marginTop: 56,
             paddingTop: 32,
             borderTop: "1px solid rgba(255,255,255,.15)",
           }}
         >
-          <div>
+          <div style={{ gridColumn: isMobile ? "1 / -1" : undefined }}>
             <Logo accent={accent} />
             <p
               style={{
@@ -57,7 +59,8 @@ export function Footer() {
                   color: "var(--paper)",
                   fontFamily: "inherit",
                   fontSize: 13,
-                  maxWidth: 280,
+                  maxWidth: isMobile ? undefined : 280,
+                  minWidth: 0,
                 }}
               />
               <button
@@ -71,6 +74,7 @@ export function Footer() {
                   fontWeight: 500,
                   fontSize: 13,
                   cursor: "pointer",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Notify me
@@ -144,7 +148,7 @@ export function Footer() {
           }}
         >
           <span>© 2026 Project House. Built for people who build.</span>
-          <span className="mono">v2.4 · 48 projects · last drop 03 Apr</span>
+          {!isMobile && <span className="mono">v2.4 · 48 projects · last drop 03 Apr</span>}
         </div>
       </div>
     </footer>

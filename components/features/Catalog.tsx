@@ -4,6 +4,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { CATEGORIES, PROJECTS } from "@/lib/data";
 import { ProjectCard } from "./ProjectCard";
+import { useIsMobile } from "../../hooks/useIsMobile";
 
 function CustomSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
@@ -41,14 +42,14 @@ function CustomSelect({ value, onChange, options }: { value: string; onChange: (
         }}
       >
         <span style={{ flex: 1 }}>{selectedTarget.label}</span>
-        <svg 
+        <svg
           width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
           style={{ position: "absolute", right: 14, pointerEvents: "none", color: "var(--muted)" }}
         >
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </button>
-      
+
       {open && (
         <div
           style={{
@@ -102,6 +103,7 @@ export function Catalog() {
   const [cat, setCat] = useState("all");
   const [sort, setSort] = useState("popular");
   const [q, setQ] = useState("");
+  const isMobile = useIsMobile();
 
   const filtered = useMemo(() => {
     let xs = PROJECTS.filter((p) => cat === "all" || p.cat === cat);
@@ -119,14 +121,15 @@ export function Catalog() {
   }, [cat, sort, q]);
 
   return (
-    <section id="catalog" style={{ padding: "100px 28px 60px" }}>
+    <section id="catalog" style={{ padding: isMobile ? "60px 16px 40px" : "100px 28px 60px" }}>
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <div
           style={{
             display: "flex",
-            alignItems: "end",
+            alignItems: isMobile ? "start" : "end",
             justifyContent: "space-between",
-            gap: 40,
+            gap: isMobile ? 20 : 40,
+            flexDirection: isMobile ? "column" : "row",
             flexWrap: "wrap",
           }}
         >
@@ -145,7 +148,7 @@ export function Catalog() {
             <h2
               className="serif"
               style={{
-                fontSize: "clamp(44px,5.2vw,78px)",
+                fontSize: "clamp(32px,5.2vw,78px)",
                 lineHeight: 1,
                 margin: "12px 0 0",
                 letterSpacing: "-.02em",
@@ -155,7 +158,7 @@ export function Catalog() {
               Projects picked for a <span style={{ fontStyle: "italic" }}>fast-changing</span> syllabus.
             </h2>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", width: isMobile ? "100%" : undefined }}>
             <div
               style={{
                 display: "flex",
@@ -165,7 +168,8 @@ export function Catalog() {
                 borderRadius: 999,
                 padding: "8px 14px",
                 background: "var(--card)",
-                width: 280,
+                flex: isMobile ? 1 : undefined,
+                width: isMobile ? undefined : 280,
               }}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -175,7 +179,7 @@ export function Catalog() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search projects, stacks, topics…"
+                placeholder="Search projects…"
                 style={{
                   flex: 1,
                   border: "none",
@@ -184,6 +188,7 @@ export function Catalog() {
                   fontSize: 13,
                   color: "var(--ink)",
                   fontFamily: "inherit",
+                  minWidth: 0,
                 }}
               />
               {q && (
@@ -262,17 +267,32 @@ export function Catalog() {
         {/* Result count */}
         <div
           className="mono"
-          style={{ fontSize: 12, color: "var(--muted)", marginTop: 20, display: "flex", justifyContent: "space-between" }}
+          style={{
+            fontSize: 12,
+            color: "var(--muted)",
+            marginTop: 20,
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 8,
+          }}
         >
           <span>
             Showing {filtered.length} project{filtered.length !== 1 ? "s" : ""}{" "}
             {cat !== "all" && `· ${CATEGORIES.find((x) => x.id === cat)?.label}`}
           </span>
-          <span>Updated daily · next drop in 12 days</span>
+          {!isMobile && <span>Updated daily · next drop in 12 days</span>}
         </div>
 
         {/* Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 20, marginTop: 20 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill,minmax(300px,1fr))",
+            gap: 20,
+            marginTop: 20,
+          }}
+        >
           {filtered.map((p, i) => (
             <ProjectCard
               key={p.id}
