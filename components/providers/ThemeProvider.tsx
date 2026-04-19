@@ -27,6 +27,8 @@ interface ProjectHouseState {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   authOpen: boolean;
   setAuthOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  vivaOpen: boolean;
+  setVivaOpen: React.Dispatch<React.SetStateAction<boolean>>;
   signOut: () => void;
 }
 
@@ -59,6 +61,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [tweaksVisible, setTweaksVisible] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const [vivaOpen, setVivaOpen] = useState(false);
 
   useEffect(() => {
     const s = localStorage.getItem("ph-theme");
@@ -140,6 +143,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setUser,
         authOpen,
         setAuthOpen,
+        vivaOpen,
+        setVivaOpen,
         signOut,
       }}
     >

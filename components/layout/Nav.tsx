@@ -5,7 +5,7 @@ import { useProjectHouse } from "../providers/ThemeProvider";
 import { Logo, ArrowUpRight } from "../ui/icons";
 
 export function Nav() {
-  const { dark, setDark, setSearchOpen, accent, user, setAuthOpen, signOut } = useProjectHouse();
+  const { dark, setDark, setSearchOpen, accent, user, setAuthOpen, signOut, setVivaOpen } = useProjectHouse();
   const [progress, setProgress] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -60,6 +60,16 @@ export function Nav() {
                 {x}
               </a>
             ))}
+            <button
+              onClick={() => setVivaOpen(true)}
+              style={{
+                padding: "10px 14px", borderRadius: 999, border: "none", background: "transparent",
+                fontFamily: "inherit", fontSize: 14, color: "var(--ink)", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 5,
+              }}
+            >
+              🎓 Viva Prep
+            </button>
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button

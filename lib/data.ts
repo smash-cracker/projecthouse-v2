@@ -61,3 +61,80 @@ export const BUNDLES = [
 export const TWEAK_DEFAULTS = {
   "accent": "#FF8A5C"
 };
+
+export const ADD_ONS = [
+  { id: 'src',     label: 'Source Code',          desc: 'Complete, runnable codebase',         price: 599,  icon: '💻', required: true  },
+  { id: 'report',  label: 'Project Report',       desc: 'Thesis-ready PDF (50–80 pages)',       price: 299,  icon: '📄', required: false },
+  { id: 'slides',  label: 'Presentation Slides',  desc: 'PPT/PPTX viva deck (20–30 slides)',   price: 149,  icon: '🖼️', required: false },
+  { id: 'data',    label: 'Dataset',              desc: 'Cleaned, labelled, ready to train',   price: 199,  icon: '🗄️', required: false },
+  { id: 'nb',      label: 'Notebooks',            desc: 'Step-by-step Jupyter walkthroughs',   price: 149,  icon: '📓', required: false },
+  { id: 'deploy',  label: 'Deployment Guide',     desc: 'Docker / Vercel / Render setup',      price: 99,   icon: '🚀', required: false },
+  { id: 'papers',  label: 'Reference Papers',     desc: 'Curated IEEE/ACM PDFs with notes',    price: 99,   icon: '📚', required: false },
+  { id: 'viva',    label: 'Viva Q&A Guide',       desc: 'Project-specific panel questions',    price: 149,  icon: '🎓', required: false },
+  { id: 'support', label: '1-Month Support',      desc: 'WhatsApp Q&A with the author',        price: 299,  icon: '💬', required: false },
+];
+
+export const ADD_ONS_INIT: Record<string, boolean> = ADD_ONS.reduce(
+  (a, i) => ({ ...a, [i.id]: i.required }),
+  {}
+);
+
+export const ADD_ONS_FULL = ADD_ONS.reduce((s, i) => s + i.price, 0);
+
+export const VIVA_TABS = [
+  { id: 'ml',  label: 'Machine Learning', icon: '🤖' },
+  { id: 'dl',  label: 'Deep Learning',    icon: '🧠' },
+  { id: 'cv',  label: 'Computer Vision',  icon: '👁️' },
+  { id: 'web', label: 'Web Applications', icon: '🌐' },
+  { id: 'mob', label: 'Mobile Apps',      icon: '📱' },
+];
+
+export const VIVA_QA: Record<string, { q: string; a: string }[]> = {
+  ml: [
+    { q: 'What is the bias-variance tradeoff and how did you handle it in your project?', a: 'Bias is the error from wrong assumptions; variance is the error from sensitivity to training data. A high-bias model underfits; high-variance overfits. In ML projects like credit scoring, cross-validation and regularisation (L1/L2) are used to find the sweet spot.' },
+    { q: 'Why did you choose XGBoost over a simple decision tree?', a: 'XGBoost uses gradient boosting — it builds trees sequentially, each correcting errors of the previous. It handles missing values natively, supports regularisation, and typically outperforms single trees by a large margin on tabular data.' },
+    { q: 'What is feature engineering and why is it critical for ML?', a: 'Feature engineering transforms raw data into meaningful inputs. For example, deriving "debt-to-income ratio" from separate columns gives the model a signal it cannot easily learn on its own. Good features reduce model complexity requirements.' },
+    { q: 'How did you evaluate your model? What metrics did you use and why?', a: 'Accuracy alone is misleading on imbalanced data. Precision, recall, F1-score, and AUC-ROC give a fuller picture. For a fraud/credit model, recall (catching actual positives) is usually prioritised over precision.' },
+    { q: 'What is cross-validation and why is it better than a single train/test split?', a: 'k-Fold cross-validation splits the data into k folds, trains k times each using a different fold as the test set, and averages results. It gives a more reliable estimate of generalisation and reduces variance in the evaluation.' },
+    { q: 'What steps did you take to handle class imbalance?', a: 'Common strategies include oversampling the minority class (SMOTE), undersampling the majority, using class-weight parameters in the model, and choosing metrics like F1 that reflect imbalance.' },
+    { q: 'Explain your data preprocessing pipeline.', a: 'Steps typically include handling missing values (imputation), encoding categorical variables (one-hot / label encoding), scaling numeric features (StandardScaler / MinMaxScaler), and splitting into train/validation/test sets before any fitting.' },
+    { q: 'What is overfitting? How would you detect and fix it?', a: 'Overfitting means the model memorises training data and fails on unseen data. Detect it by comparing train vs. validation loss. Fix it with more data, dropout, regularisation, early stopping, or simpler models.' },
+  ],
+  dl: [
+    { q: 'What is backpropagation and how does it train a neural network?', a: 'Backpropagation computes the gradient of the loss with respect to each weight using the chain rule, then an optimiser (like Adam) updates the weights to minimise loss. It flows backward from output layer to input layer.' },
+    { q: 'Why did you use LSTM / Transformer instead of a basic RNN?', a: 'Vanilla RNNs suffer from vanishing gradients over long sequences. LSTMs use gated cells (input, forget, output gates) to carry long-range context. Transformers use self-attention and are parallelisable, handling even longer dependencies.' },
+    { q: 'What activation function did you use and why?', a: 'ReLU is the default hidden-layer choice — it avoids vanishing gradients and is computationally cheap. Sigmoid/Softmax are used in output layers for binary/multi-class classification respectively.' },
+    { q: 'How did you prevent your deep learning model from overfitting?', a: 'Dropout randomly zeros activations during training, forcing redundant representations. Batch normalisation stabilises training. Data augmentation artificially expands the dataset. Early stopping halts training when validation loss stops improving.' },
+    { q: 'What is transfer learning and why did you use a pre-trained model?', a: 'Transfer learning re-uses weights learned on large datasets (like ImageNet). The early layers capture generic features (edges, textures) that transfer well, so fine-tuning only the later layers achieves high accuracy with far less data and training time.' },
+    { q: 'Explain your training loop — loss function, optimiser, learning rate.', a: 'The loss function measures prediction error (cross-entropy for classification, MSE for regression). The optimiser (Adam, SGD) computes weight updates. The learning rate controls step size; a scheduler (ReduceLROnPlateau, cosine annealing) adjusts it during training.' },
+    { q: 'What is batch normalisation and what problem does it solve?', a: 'BatchNorm normalises activations within a mini-batch to zero mean and unit variance, then applies learnable scale and shift. It reduces internal covariate shift, allowing higher learning rates and faster convergence.' },
+    { q: 'How did you handle limited labelled data for your deep learning project?', a: 'Strategies include data augmentation (flips, crops, colour jitter), semi-supervised learning, self-supervised pre-training, or using a pre-trained backbone and fine-tuning on the small labelled set.' },
+  ],
+  cv: [
+    { q: 'What is a convolutional layer and what does it learn?', a: 'A conv layer applies learned filters (kernels) that slide across the input image computing dot products. Early layers learn low-level features (edges, colours); deeper layers learn complex shapes and object parts.' },
+    { q: 'What is Grad-CAM and why is it useful?', a: "Gradient-weighted Class Activation Mapping highlights which regions of an image influenced a CNN's prediction. It uses the gradients flowing into the final conv layer to produce a coarse heatmap, making model decisions interpretable." },
+    { q: 'Explain the YOLO architecture. How does it differ from two-stage detectors?', a: 'YOLO is a single-stage detector — it predicts bounding boxes and class probabilities in one forward pass over a grid. Two-stage detectors (Faster R-CNN) first propose regions then classify them. YOLO is faster; two-stage detectors are generally more accurate on small objects.' },
+    { q: 'What datasets did you use and what was the train/val/test split?', a: 'Standard splits are 70/15/15 or 80/10/10. For medical imaging (APTOS, for example) the split must be stratified by class and patient to avoid data leakage between the sets.' },
+    { q: 'How did you handle class imbalance in your image dataset?', a: 'Techniques include weighted loss functions, oversampling rare classes (duplication or synthetic augmentation with GANs), and under-sampling dominant classes. Confusion matrices and per-class F1 reveal which classes need attention.' },
+    { q: 'What is mean Average Precision (mAP) in object detection?', a: 'mAP averages the Average Precision (area under the Precision-Recall curve) across all object classes and IoU thresholds. mAP@0.5 is the standard benchmark — a detection is counted correct if its IoU with the ground-truth box exceeds 0.5.' },
+    { q: 'What augmentation techniques did you apply and why?', a: 'Random horizontal flips, rotation, brightness/contrast jitter, and random crops increase dataset diversity. Augmentations are applied only to training data and help the model generalise to real-world variation in lighting and orientation.' },
+  ],
+  web: [
+    { q: 'Explain your system architecture. What does each component do?', a: 'A typical MERN/Next.js project has a React frontend (renders UI, handles state), a Node/Express backend (business logic, authentication, API routes), a MongoDB or PostgreSQL database, and optional third-party services (OpenAI, Stripe, etc.).' },
+    { q: 'How did you implement authentication and authorisation?', a: 'JWT (JSON Web Tokens) are stateless — the server issues a signed token on login; subsequent requests include it in the Authorization header. Middleware validates the token and attaches the user to the request. NextAuth simplifies OAuth flows.' },
+    { q: 'What is REST vs GraphQL? Which did you use and why?', a: 'REST uses fixed endpoints per resource; GraphQL uses a single endpoint with a query language letting clients request exactly the data they need. REST is simpler to cache; GraphQL reduces over-fetching in complex UIs.' },
+    { q: 'How does your application handle errors and edge cases?', a: 'Frontend: try/catch around fetch calls, user-friendly error states and loading skeletons. Backend: centralised error-handling middleware returns consistent JSON error objects with HTTP status codes. Validation at the boundary using Zod or Joi.' },
+    { q: 'What security measures did you implement?', a: 'Input sanitisation to prevent XSS, parameterised queries / ORM to prevent SQL injection, CORS configuration, rate limiting on auth endpoints, environment variables for secrets, and HTTPS in deployment.' },
+    { q: 'How did you deploy the project and what does the CI/CD pipeline look like?', a: 'Common setups: Vercel for the Next.js frontend (auto-deploys on git push), Railway or Render for the Node backend, MongoDB Atlas as a managed database. GitHub Actions runs tests and linting before deploying.' },
+    { q: 'What is your database schema? Walk us through the main collections/tables.', a: 'This is project-specific. The panel expects you to explain entities, their relationships (1:1, 1:N, N:M), indexes used for query performance, and any denormalisation decisions you made for speed.' },
+  ],
+  mob: [
+    { q: 'Why did you choose Flutter over React Native (or vice versa)?', a: 'Flutter uses Dart and its own rendering engine (Skia/Impeller), giving pixel-perfect consistency across platforms. React Native uses JavaScript bridge to native components, offering better ecosystem access. Flutter is faster to render; React Native has a larger JS library ecosystem.' },
+    { q: 'How does on-device inference work in your TFLite app?', a: 'The trained model is converted to TFLite FlatBuffer format and bundled in the app assets. The TFLite interpreter loads it, runs quantised inference on the CPU or GPU delegate, and returns results locally — no internet required.' },
+    { q: 'How did you manage state in your Flutter application?', a: 'Options include setState (local), Provider, Riverpod, or BLoC. Riverpod and BLoC suit larger apps by separating business logic from UI. The choice depends on complexity and team preference.' },
+    { q: 'What is the difference between hot reload and hot restart in Flutter?', a: 'Hot reload injects updated Dart source into the running VM and rebuilds the widget tree, preserving app state. Hot restart resets the full Dart VM — useful when state or initialisation logic changes.' },
+    { q: 'How did you handle offline functionality?', a: "SQLite (via sqflite) stores data locally. Firebase's offline persistence caches Firestore reads and queues writes until connectivity is restored. The app detects connectivity with the connectivity_plus package and shows appropriate UI states." },
+    { q: 'How did you optimise the app for performance and battery?', a: 'Key strategies: use const constructors to avoid unnecessary rebuilds, cache images (cached_network_image), run heavy work (model inference, image processing) in Dart isolates to avoid janking the UI thread, and lazy-load lists with ListView.builder.' },
+    { q: 'What permissions does your app require and how did you handle them?', a: 'Camera, storage, and location permissions are declared in AndroidManifest.xml and Info.plist. Runtime requests use the permission_handler package. The app gracefully degrades or explains why the permission is needed if the user denies.' },
+  ],
+};

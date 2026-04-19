@@ -11,6 +11,7 @@ import { Drawer } from "@/components/modals/Drawer";
 import { SearchPalette } from "@/components/modals/SearchPalette";
 import { TweakPanel } from "@/components/modals/TweakPanel";
 import { AuthModal } from "@/components/modals/AuthModal";
+import { VivaModal } from "@/components/modals/VivaModal";
 
 export default function Home() {
   const { dark } = useProjectHouse();
@@ -27,6 +28,7 @@ export default function Home() {
       <SearchPalette />
       <TweakPanel />
       <AuthModal />
+      <VivaModal />
     </>
   );
 }

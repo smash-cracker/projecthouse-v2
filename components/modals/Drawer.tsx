@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
-import { CATEGORIES, STACKS, ABSTRACTS } from "@/lib/data";
+import { CATEGORIES, STACKS, ABSTRACTS, ADD_ONS, ADD_ONS_INIT, ADD_ONS_FULL } from "@/lib/data";
 import { ArrowUpRight, Star } from "../ui/icons";
-import { CardArt } from "../features/ProjectCard";
+
 import { DemoModal } from "./DemoModal";
 import { jsPDF } from "jspdf";
 import JSZip from "jszip";
@@ -187,7 +187,7 @@ function StackPanel({ p, accent }: { p: any; accent: string }) {
   );
 }
 
-function AbstractPanel({ p, accent }: { p: any; accent: string }) {
+function AbstractPanel({ p }: { p: any }) {
   const ab = ABSTRACTS[p.id] || {
     objective: p.desc,
     methodology: "Detailed methodology available in the full report included with purchase.",
@@ -400,10 +400,19 @@ export function Drawer() {
   const { openedProject: project, setOpenedProject, accent } = useProjectHouse();
   const [tab, setTab] = useState("overview");
   const [demoOpen, setDemoOpen] = useState(false);
+  const [sel, setSel] = useState<Record<string, boolean>>(ADD_ONS_INIT);
+
+  const toggleAddon = (id: string) => {
+    if (ADD_ONS.find((i) => i.id === id)?.required) return;
+    setSel((s) => ({ ...s, [id]: !s[id] }));
+  };
+  const customTotal = ADD_ONS.reduce((sum, i) => (sel[i.id] ? sum + i.price : sum), 0);
+  const selCount = Object.values(sel).filter(Boolean).length;
 
   useEffect(() => {
     if (!project) {
       setDemoOpen(false);
+      setSel(ADD_ONS_INIT);
       return;
     }
     const onKey = (e: KeyboardEvent) => {
@@ -543,19 +552,43 @@ export function Drawer() {
           <div style={{ marginTop: 24, minHeight: 220 }}>
             {tab === "overview" && (
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                {p.includes.map((it: string) => (
-                  <li key={it} style={{ display: "flex", alignItems: "start", gap: 10, fontSize: 14, padding: "14px 16px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10 }}>
-                    <span style={{ width: 20, height: 20, borderRadius: "50%", background: accent, display: "grid", placeItems: "center", flexShrink: 0, marginTop: 1 }}>
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4l3 3 5-6" stroke="var(--accent-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    {it}
-                  </li>
-                ))}
+                {ADD_ONS.map((item) => {
+                  const on = sel[item.id];
+                  return (
+                    <li
+                      key={item.id}
+                      onClick={() => toggleAddon(item.id)}
+                      style={{
+                        display: "flex", alignItems: "start", gap: 10, fontSize: 14,
+                        padding: "14px 16px", background: "var(--card)",
+                        border: "1px solid var(--line)", borderRadius: 10,
+                        cursor: item.required ? "default" : "pointer",
+                        userSelect: "none",
+                        opacity: on ? 1 : 0.45,
+                        transition: "opacity .15s",
+                      }}
+                    >
+                      <span style={{
+                        width: 20, height: 20, borderRadius: "50%",
+                        background: on ? accent : "var(--line)",
+                        display: "grid", placeItems: "center", flexShrink: 0, marginTop: 1,
+                        transition: "background .15s",
+                      }}>
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M1 4l3 3 5-6" stroke={on ? "var(--accent-ink)" : "var(--muted)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                      <span style={{ flex: 1 }}>
+                        <span style={{ display: "block" }}>{item.label}</span>
+                        <span style={{ fontSize: 11, color: "var(--muted)" }}>{item.desc}</span>
+                      </span>
+                      <span style={{ fontSize: 12, color: "var(--muted)", flexShrink: 0 }}>₹{item.price}</span>
+                    </li>
+                  );
+                })}
               </ul>
             )}
-            {tab === "abstract" && <AbstractPanel p={p} accent={accent} />}
+            {tab === "abstract" && <AbstractPanel p={p} />}
             {tab === "stack" && <StackPanel p={p} accent={accent} />}
             {tab === "timeline" && (
               <ol style={{ listStyle: "none", padding: 0, margin: 0, position: "relative" }}>
@@ -598,12 +631,19 @@ export function Drawer() {
           }}
         >
           <div>
-            <div className="mono" style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".12em" }}>
-              Total
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="mono" style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".12em" }}>
+                Your total
+              </div>
+              {customTotal !== ADD_ONS_FULL && (
+                <span style={{ fontSize: 11, color: "var(--muted)", textDecoration: "line-through" }}>
+                  ₹{ADD_ONS_FULL.toLocaleString("en-IN")}
+                </span>
+              )}
             </div>
-            <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-.02em" }}>
-              ₹{p.price.toLocaleString("en-IN")}
-              <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 400 }}> · one-time</span>
+            <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-.02em", lineHeight: 1.1 }}>
+              ₹{customTotal.toLocaleString("en-IN")}
+              <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 400 }}> · {selCount} item{selCount !== 1 ? "s" : ""}</span>
             </div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
