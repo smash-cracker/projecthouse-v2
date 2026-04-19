@@ -26,6 +26,17 @@ const COLORS = [
   { label: "Teal", value: "#134E4A" },
 ];
 
+// Default item names per category (prices are always set per-project)
+const DEFAULT_TEMPLATES: Record<string, string[]> = {
+  ml:  ["Full source code", "Cleaned dataset", "Trained model (.pkl)", "Report (PDF)", "README"],
+  dl:  ["Full source code", "Jupyter notebook", "Pretrained weights", "Training history", "Report (PDF)"],
+  cv:  ["Full source code", "Jupyter notebook", "Sample images", "Pretrained model", "Report (PDF)"],
+  web: ["Full source code", "Database schema", "Deployment guide", "README"],
+  mob: ["Full source code", "APK file", "UI assets", "README"],
+};
+
+type IncludeItem = { name: string; price: string };
+
 const EMPTY_FORM = {
   id: "",
   cat: "ml",
@@ -40,7 +51,6 @@ const EMPTY_FORM = {
   desc: "",
   files: "",
   pages: "",
-  includes: "",
   youtubeLink: "",
 };
 
@@ -53,35 +63,44 @@ type Project = {
   created_at: string;
 };
 
+function templateToItems(names: string[]): IncludeItem[] {
+  return names.map((name) => ({ name, price: "0" }));
+}
+
 export default function AdminPage() {
   const { user, accent } = useProjectHouse();
   const router = useRouter();
   const supabase = createClient();
 
   const [form, setForm] = useState(EMPTY_FORM);
+  const [includeItems, setIncludeItems] = useState<IncludeItem[]>(
+    templateToItems(DEFAULT_TEMPLATES.ml)
+  );
+  const [templates, setTemplates] = useState<Record<string, string[]>>(DEFAULT_TEMPLATES);
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [savingTemplates, setSavingTemplates] = useState(false);
 
   // Auth guard
   useEffect(() => {
-    if (loaded && (!user || !user.isAdmin)) {
-      router.replace("/");
-    }
+    if (loaded && (!user || !user.isAdmin)) router.replace("/");
   }, [user, loaded, router]);
 
-  // Wait for ThemeProvider to hydrate
+  // Hydrate + load saved templates
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 300);
+    try {
+      const saved = localStorage.getItem("admin_cat_templates");
+      if (saved) setTemplates({ ...DEFAULT_TEMPLATES, ...JSON.parse(saved) });
+    } catch {}
     return () => clearTimeout(t);
   }, []);
 
-  // Fetch projects from Supabase
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  useEffect(() => { fetchProjects(); }, []);
 
   async function fetchProjects() {
     const { data } = await supabase
@@ -100,13 +119,44 @@ export default function AdminPage() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  // Auto-generate ID from title
+  function handleCategoryChange(cat: string) {
+    setForm((f) => ({ ...f, cat }));
+    setIncludeItems(templateToItems(templates[cat] ?? []));
+  }
+
+  // Include item helpers
+  function setItem(i: number, patch: Partial<IncludeItem>) {
+    setIncludeItems((prev) => prev.map((item, idx) => idx === i ? { ...item, ...patch } : item));
+  }
+  function addItem() {
+    setIncludeItems((prev) => [...prev, { name: "", price: "0" }]);
+  }
+  function removeItem(i: number) {
+    setIncludeItems((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function saveTemplates() {
+    setSavingTemplates(true);
+    try {
+      localStorage.setItem("admin_cat_templates", JSON.stringify(templates));
+      showToast("✅ Templates saved!");
+    } catch {
+      showToast("❌ Failed to save", false);
+    } finally {
+      setSavingTemplates(false);
+    }
+  }
+
   function generateId(title: string) {
     return "p" + title.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) + Date.now().toString().slice(-4);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (includeItems.some((i) => !i.name.trim())) {
+      showToast("❌ All include items need a name", false);
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -123,7 +173,7 @@ export default function AdminPage() {
         description: form.desc,
         files: parseInt(form.files) || 0,
         pages: parseInt(form.pages) || 0,
-        includes: form.includes.split(",").map((s) => s.trim()).filter(Boolean),
+        includes: includeItems.map((i) => ({ name: i.name.trim(), price: parseInt(i.price) || 0 })),
         youtube_link: form.youtubeLink || null,
       };
 
@@ -131,6 +181,7 @@ export default function AdminPage() {
       if (error) throw error;
       showToast("✅ Project added successfully!");
       setForm(EMPTY_FORM);
+      setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? []));
       fetchProjects();
     } catch (err: any) {
       showToast("❌ " + (err.message ?? "Something went wrong"), false);
@@ -173,19 +224,22 @@ export default function AdminPage() {
     textTransform: "uppercase",
   };
 
+  const iconBtn: React.CSSProperties = {
+    width: 30, height: 30, borderRadius: 8,
+    border: "1px solid var(--line)", background: "transparent",
+    cursor: "pointer", color: "var(--muted)",
+    display: "grid", placeItems: "center", flexShrink: 0,
+    fontFamily: "inherit",
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)", paddingBottom: 80 }}>
       {/* Header */}
       <div style={{
         borderBottom: "1px solid var(--line)",
         padding: "20px 28px",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        background: "var(--card)",
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
+        display: "flex", alignItems: "center", gap: 12,
+        background: "var(--card)", position: "sticky", top: 0, zIndex: 10,
       }}>
         <a href="/" style={{
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -213,7 +267,7 @@ export default function AdminPage() {
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-            {/* Row: Title + ID */}
+            {/* Title + ID */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div>
                 <label style={labelStyle}>Title *</label>
@@ -225,11 +279,11 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Row: Category + Level */}
+            {/* Category + Level */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div>
                 <label style={labelStyle}>Category *</label>
-                <select required style={inputStyle} value={form.cat} onChange={e => field("cat", e.target.value)}>
+                <select required style={inputStyle} value={form.cat} onChange={e => handleCategoryChange(e.target.value)}>
                   {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                 </select>
               </div>
@@ -241,7 +295,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Row: Tag + Price */}
+            {/* Tag + Price */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div>
                 <label style={labelStyle}>Tag / Subtitle *</label>
@@ -265,13 +319,66 @@ export default function AdminPage() {
               <input required style={inputStyle} value={form.stack} onChange={e => field("stack", e.target.value)} placeholder="Python, scikit-learn, XGBoost, Streamlit" />
             </div>
 
-            {/* Includes */}
+            {/* What's Included — structured rows */}
             <div>
-              <label style={labelStyle}>What's Included (comma-separated) *</label>
-              <input required style={inputStyle} value={form.includes} onChange={e => field("includes", e.target.value)} placeholder="Full source code, Cleaned dataset, Report (PDF)" />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>What's Included *</label>
+                <span style={{ fontSize: 11, color: "var(--muted)" }}>₹0 = bundled in project price</span>
+              </div>
+
+              {/* Column headers */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 30px", gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, paddingLeft: 2 }}>Item</span>
+                <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, paddingLeft: 2 }}>Price (₹)</span>
+                <span />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {includeItems.map((item, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 110px 30px", gap: 8 }}>
+                    <input
+                      style={{ ...inputStyle, fontSize: 13 }}
+                      value={item.name}
+                      onChange={e => setItem(i, { name: e.target.value })}
+                      placeholder="e.g. Jupyter notebook"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      style={{ ...inputStyle, fontSize: 13 }}
+                      value={item.price}
+                      onChange={e => setItem(i, { price: e.target.value })}
+                      placeholder="0"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeItem(i)}
+                      style={iconBtn}
+                      title="Remove"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={addItem}
+                style={{
+                  marginTop: 10, padding: "8px 14px", borderRadius: 8,
+                  border: "1px dashed var(--line)", background: "transparent",
+                  color: "var(--muted)", fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit", width: "100%",
+                }}
+              >
+                + Add item
+              </button>
             </div>
 
-            {/* Row: Files + Pages + Rating + Downloads */}
+            {/* Files + Pages + Rating + Downloads */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
               <div>
                 <label style={labelStyle}>Files</label>
@@ -291,7 +398,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Row: Color + YouTube */}
+            {/* Color + YouTube */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div>
                 <label style={labelStyle}>Card Color</label>
@@ -304,7 +411,8 @@ export default function AdminPage() {
                       onClick={() => field("color", c.value)}
                       style={{
                         width: 28, height: 28, borderRadius: 8,
-                        background: c.value, border: form.color === c.value ? "2px solid var(--ink)" : "2px solid transparent",
+                        background: c.value,
+                        border: form.color === c.value ? "2px solid var(--ink)" : "2px solid transparent",
                         cursor: "pointer",
                       }}
                     />
@@ -321,16 +429,11 @@ export default function AdminPage() {
               type="submit"
               disabled={saving}
               style={{
-                padding: "14px 24px",
-                borderRadius: 12,
-                border: "none",
+                padding: "14px 24px", borderRadius: 12, border: "none",
                 background: saving ? "var(--muted)" : accent,
-                color: "var(--accent-ink)",
-                fontSize: 15,
-                fontWeight: 700,
+                color: "var(--accent-ink)", fontSize: 15, fontWeight: 700,
                 cursor: saving ? "not-allowed" : "pointer",
-                fontFamily: "inherit",
-                marginTop: 4,
+                fontFamily: "inherit", marginTop: 4,
               }}
             >
               {saving ? "Saving..." : "Add Project"}
@@ -338,54 +441,119 @@ export default function AdminPage() {
           </form>
         </div>
 
-        {/* Projects list */}
-        <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 24 }}>
-          <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>
-            Supabase Projects
-            <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 400, marginLeft: 8 }}>({projects.length})</span>
-          </h3>
+        {/* Right column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
-          {projects.length === 0 ? (
-            <div style={{ color: "var(--muted)", fontSize: 13, padding: "20px 0", textAlign: "center" }}>
-              No projects added yet
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {projects.map(p => (
-                <div key={p.id} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  padding: "10px 12px", borderRadius: 10,
-                  background: "var(--paper-2)", border: "1px solid var(--line)",
-                }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {p.title}
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                      {CATEGORIES.find(c => c.id === p.cat)?.label} · ₹{p.price.toLocaleString("en-IN")} · {p.level}
-                    </div>
+          {/* Category Templates */}
+          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 24 }}>
+            <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700 }}>Category Templates</h3>
+            <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--muted)" }}>
+              Default item names per category. Auto-fills the includes list when you pick a category. Prices are set per-project.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {CATEGORIES.map(c => (
+                <div key={c.id}>
+                  <label style={labelStyle}>{c.label}</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {(templates[c.id] ?? []).map((name, i) => (
+                      <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 30px", gap: 6 }}>
+                        <input
+                          style={{ ...inputStyle, fontSize: 12, padding: "7px 10px" }}
+                          value={name}
+                          onChange={e => setTemplates(prev => ({
+                            ...prev,
+                            [c.id]: prev[c.id].map((n, ni) => ni === i ? e.target.value : n),
+                          }))}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setTemplates(prev => ({
+                            ...prev,
+                            [c.id]: prev[c.id].filter((_, ni) => ni !== i),
+                          }))}
+                          style={{ ...iconBtn, width: "100%", height: 36 }}
+                        >
+                          <svg width="9" height="9" viewBox="0 0 14 14" fill="none">
+                            <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setTemplates(prev => ({ ...prev, [c.id]: [...(prev[c.id] ?? []), ""] }))}
+                      style={{
+                        padding: "6px", borderRadius: 8,
+                        border: "1px dashed var(--line)", background: "transparent",
+                        color: "var(--muted)", fontSize: 11, fontWeight: 600,
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}
+                    >
+                      + Add
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDelete(p.id)}
-                    disabled={deleting === p.id}
-                    style={{
-                      width: 30, height: 30, borderRadius: 8,
-                      border: "1px solid var(--line)", background: "transparent",
-                      cursor: "pointer", color: "var(--muted)",
-                      display: "grid", placeItems: "center", flexShrink: 0,
-                    }}
-                  >
-                    {deleting === p.id ? "…" : (
-                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                        <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                      </svg>
-                    )}
-                  </button>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+            <button
+              onClick={saveTemplates}
+              disabled={savingTemplates}
+              style={{
+                marginTop: 18, padding: "10px 18px", borderRadius: 10,
+                border: "none", background: accent, color: "var(--accent-ink)",
+                fontSize: 13, fontWeight: 700, cursor: "pointer",
+                fontFamily: "inherit", width: "100%",
+              }}
+            >
+              {savingTemplates ? "Saving…" : "Save Templates"}
+            </button>
+          </div>
+
+          {/* Projects list */}
+          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 24 }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>
+              Supabase Projects
+              <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 400, marginLeft: 8 }}>({projects.length})</span>
+            </h3>
+
+            {projects.length === 0 ? (
+              <div style={{ color: "var(--muted)", fontSize: 13, padding: "20px 0", textAlign: "center" }}>
+                No projects added yet
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {projects.map(p => (
+                  <div key={p.id} style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "10px 12px", borderRadius: 10,
+                    background: "var(--paper-2)", border: "1px solid var(--line)",
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {p.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
+                        {CATEGORIES.find(c => c.id === p.cat)?.label} · ₹{p.price.toLocaleString("en-IN")} · {p.level}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(p.id)}
+                      disabled={deleting === p.id}
+                      style={iconBtn}
+                    >
+                      {deleting === p.id ? "…" : (
+                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                          <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>{/* end right column */}
       </div>
 
       {/* Toast */}
@@ -398,7 +566,6 @@ export default function AdminPage() {
           fontSize: 14, fontWeight: 500,
           boxShadow: "0 8px 24px rgba(0,0,0,.25)",
           zIndex: 999, whiteSpace: "nowrap",
-          animation: "fadein .2s ease",
         }}>
           {toast.msg}
         </div>
