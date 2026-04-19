@@ -156,7 +156,7 @@ export function Contact() {
                 >
                   {h.name}
                 </div>
-                <div style={{ fontSize: isMobile ? 13 : 18, fontWeight: 600, marginTop: 4, letterSpacing: "-.01em", wordBreak: "break-word" }}>
+                <div style={{ fontSize: isMobile ? 13 : 18, fontWeight: 600, marginTop: 4, letterSpacing: "-.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {h.handle}
                 </div>
                 {!isMobile && (
