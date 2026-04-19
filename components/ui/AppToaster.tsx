@@ -9,7 +9,7 @@ export function AppToaster() {
   return (
     <Toaster
       theme={dark ? "dark" : "light"}
-      position="bottom-center"
+      position="top-center"
       toastOptions={{
         style: {
           background: "var(--card)",

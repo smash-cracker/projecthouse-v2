@@ -2,9 +2,28 @@
 // Populates viva_qa table with dummy data. Safe to re-run — clears first.
 
 import { createClient } from "@supabase/supabase-js";
+import { readFileSync } from "fs";
 
-const SUPABASE_URL = "https://iiuyjsonjmwkgugixmqb.supabase.co";
-const SERVICE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpdXlqc29uam13a2d1Z2l4bXFiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjUxMzU3MiwiZXhwIjoyMDkyMDg5NTcyfQ.9mirqj7FD5txg-kDskDP47foKEPW16iSxURglTlxm5w";
+// Manually parse .env.local (no dotenv needed)
+const env = {};
+try {
+  const raw = readFileSync(".env.local", "utf8");
+  for (const line of raw.split("\n")) {
+    const [key, ...rest] = line.split("=");
+    if (key && rest.length) env[key.trim()] = rest.join("=").trim();
+  }
+} catch {
+  console.error("❌  Could not read .env.local");
+  process.exit(1);
+}
+
+const SUPABASE_URL = env["NEXT_PUBLIC_SUPABASE_URL"];
+const SERVICE_KEY  = env["SUPABASE_SERVICE_ROLE_KEY"];
+
+if (!SUPABASE_URL || !SERVICE_KEY) {
+  console.error("❌  Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local");
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
