@@ -47,7 +47,7 @@ export function Nav() {
           style={{
             maxWidth: 1320,
             margin: "0 auto",
-            padding: isMobile ? "14px 16px" : "18px 28px",
+            padding: "16px 28px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -56,35 +56,33 @@ export function Nav() {
         >
           <Logo accent={accent} />
 
-          {/* Desktop nav */}
-          {!isMobile && (
-            <nav style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 14 }}>
-              {NAV_LINKS.map((x) => (
-                <a
-                  key={x}
-                  href={"#" + x.toLowerCase().replace(/ /g, "-")}
-                  style={{
-                    padding: "10px 14px",
-                    borderRadius: 999,
-                    textDecoration: "none",
-                    color: "var(--ink)",
-                  }}
-                >
-                  {x}
-                </a>
-              ))}
-              <button
-                onClick={() => setVivaOpen(true)}
+          {/* Desktop nav — hidden via CSS on mobile */}
+          <nav className="nav-desktop" style={{ gap: 4, alignItems: "center", fontSize: 14 }}>
+            {NAV_LINKS.map((x) => (
+              <a
+                key={x}
+                href={"#" + x.toLowerCase().replace(/ /g, "-")}
                 style={{
-                  padding: "10px 14px", borderRadius: 999, border: "none", background: "transparent",
-                  fontFamily: "inherit", fontSize: 14, color: "var(--ink)", cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "10px 14px",
+                  borderRadius: 999,
+                  textDecoration: "none",
+                  color: "var(--ink)",
                 }}
               >
-                Viva Prep
-              </button>
-            </nav>
-          )}
+                {x}
+              </a>
+            ))}
+            <button
+              onClick={() => setVivaOpen(true)}
+              style={{
+                padding: "10px 14px", borderRadius: 999, border: "none", background: "transparent",
+                fontFamily: "inherit", fontSize: 14, color: "var(--ink)", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 5,
+              }}
+            >
+              Viva Prep
+            </button>
+          </nav>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {/* Search — icon only on mobile */}
@@ -95,7 +93,7 @@ export function Nav() {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                padding: isMobile ? "9px" : "9px 12px",
+                padding: "9px 12px",
                 borderRadius: 999,
                 border: "1px solid var(--line)",
                 background: "transparent",
@@ -108,17 +106,16 @@ export function Nav() {
                 <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              {!isMobile && (
-                <>
-                  Search{" "}
-                  <span
-                    className="mono"
-                    style={{ border: "1px solid var(--line)", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}
-                  >
-                    ⌘K
-                  </span>
-                </>
-              )}
+              {/* Search label — hidden on mobile via CSS */}
+              <span className="nav-desktop" style={{ alignItems: "center", gap: 6 }}>
+                Search{" "}
+                <span
+                  className="mono"
+                  style={{ border: "1px solid var(--line)", padding: "1px 5px", borderRadius: 4, fontSize: 11 }}
+                >
+                  ⌘K
+                </span>
+              </span>
             </button>
 
             {/* Theme toggle */}
@@ -148,23 +145,22 @@ export function Nav() {
               )}
             </button>
 
-            {/* Browse catalog — hidden on mobile */}
-            {!isMobile && (
-              <button
-                style={{
-                  padding: "10px 18px", borderRadius: 999, border: "none",
-                  background: "var(--ink)", color: "var(--paper)",
-                  cursor: "pointer", fontSize: 13, fontWeight: 500,
-                  display: "flex", alignItems: "center", gap: 8,
-                }}
-              >
-                Browse catalog <ArrowUpRight />
-              </button>
-            )}
+            {/* Browse catalog — hidden on mobile via CSS */}
+            <button
+              className="nav-desktop"
+              style={{
+                padding: "10px 18px", borderRadius: 999, border: "none",
+                background: "var(--ink)", color: "var(--paper)",
+                cursor: "pointer", fontSize: 13, fontWeight: 500,
+                alignItems: "center", gap: 8,
+              }}
+            >
+              Browse catalog <ArrowUpRight />
+            </button>
 
-            {/* User menu — desktop */}
-            {!isMobile && (
-              user ? (
+            {/* User menu — desktop only via CSS */}
+            <div className="nav-desktop" style={{ alignItems: "center" }}>
+              {user ? (
                 <div style={{ position: "relative" }}>
                   <button
                     onClick={() => setMenuOpen((v) => !v)}
@@ -238,31 +234,30 @@ export function Nav() {
                 >
                   Sign in
                 </button>
-              )
-            )}
+              )}
+            </div>
 
-            {/* Hamburger — mobile only */}
-            {isMobile && (
-              <button
-                onClick={() => setMobileNavOpen((v) => !v)}
-                aria-label="Menu"
-                style={{
-                  width: 38, height: 38, borderRadius: 999,
-                  border: "1px solid var(--line)", background: "transparent",
-                  cursor: "pointer", color: "var(--ink)", display: "grid", placeItems: "center",
-                }}
-              >
-                {mobileNavOpen ? (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  <svg width="15" height="12" viewBox="0 0 15 12" fill="none">
-                    <path d="M1 1h13M1 6h13M1 11h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                )}
-              </button>
-            )}
+            {/* Hamburger — mobile only via CSS */}
+            <button
+              className="nav-mobile"
+              onClick={() => setMobileNavOpen((v) => !v)}
+              aria-label="Menu"
+              style={{
+                width: 38, height: 38, borderRadius: 999,
+                border: "1px solid var(--line)", background: "transparent",
+                cursor: "pointer", color: "var(--ink)", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              {mobileNavOpen ? (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <svg width="15" height="12" viewBox="0 0 15 12" fill="none">
+                  <path d="M1 1h13M1 6h13M1 11h13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
 

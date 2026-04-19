@@ -81,3 +81,21 @@ a{
   from{opacity:0} 
   to{opacity:1} 
 }
+
+/* ── Responsive nav utilities (CSS-driven, no JS flash) ── */
+/* Hidden on mobile (<768px), visible on desktop */
+.nav-desktop { display: flex; }
+.nav-desktop-block { display: block; }
+@media (max-width: 767px) {
+  .nav-desktop       { display: none !important; }
+  .nav-desktop-block { display: none !important; }
+}
+
+/* Hidden on desktop, visible on mobile */
+.nav-mobile { display: flex; }
+.nav-mobile-block { display: block; }
+@media (min-width: 768px) {
+  .nav-mobile       { display: none !important; }
+  .nav-mobile-block { display: none !important; }
+}
+
