@@ -392,18 +392,14 @@ export function VivaModal() {
     <div style={{ position: "fixed", inset: 0, zIndex: 500, display: "flex", flexDirection: "column", background: "var(--paper)" }}>
 
       {/* Header */}
-      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 28px", display: "flex", alignItems: "center", gap: 16, height: 64, flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: 8 }}>
-          <span style={{ fontSize: 20 }}>🎓</span>
-          <span style={{ fontWeight: 700, fontSize: 16 }}>Viva Prep</span>
-          <span className="mono" style={{ fontSize: 11, color: "var(--muted)", background: "var(--card)", padding: "2px 8px", borderRadius: 6 }}>
-            {totalCount} questions
-          </span>
+      <div style={{ borderBottom: "1px solid var(--line)", padding: isMobile ? "0 16px" : "0 28px", display: "flex", alignItems: "center", gap: isMobile ? 8 : 16, height: 64, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: isMobile ? 0 : 8 }}>
+          {!isMobile && <span style={{ fontWeight: 700, fontSize: 16 }}>Viva Prep</span>}
         </div>
 
         {/* Search — hidden in bot tab */}
         {!isBot && (
-          <div style={{ flex: 1, maxWidth: 480, display: "flex", alignItems: "center", gap: 10, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, padding: "9px 14px" }}>
+          <div style={{ flex: 1, maxWidth: 480, minWidth: 0, display: "flex", alignItems: "center", gap: 10, background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10, padding: "9px 14px" }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: "var(--muted)" }}>
               <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" />
               <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -411,8 +407,8 @@ export function VivaModal() {
             <input
               value={query}
               onChange={(e) => { setQuery(e.target.value); setOpenIdx(null); }}
-              placeholder="Search all questions…"
-              style={{ flex: 1, border: "none", outline: "none", background: "transparent", color: "var(--ink)", fontSize: 14, fontFamily: "inherit" }}
+              placeholder={isMobile ? "Search..." : "Search all questions…"}
+              style={{ flex: 1, border: "none", outline: "none", background: "transparent", color: "var(--ink)", fontSize: 14, fontFamily: "inherit", minWidth: 0 }}
             />
             {query && (
               <button onClick={() => setQuery("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
@@ -422,12 +418,14 @@ export function VivaModal() {
 
         <button
           onClick={() => setVivaOpen(false)}
-          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", cursor: "pointer", fontFamily: "inherit", fontSize: 13, color: "var(--ink)" }}
+          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, padding: isMobile ? "8px" : "8px 14px", borderRadius: 8, border: "1px solid var(--line)", background: "transparent", cursor: "pointer", fontFamily: "inherit", fontSize: 13, color: "var(--ink)", flexShrink: 0 }}
         >
           <svg width="12" height="12" viewBox="0 0 12 12">
             <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
-          Close <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>ESC</span>
+          {!isMobile && (
+            <>Close <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>ESC</span></>
+          )}
         </button>
       </div>
 

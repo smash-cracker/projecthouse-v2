@@ -81,7 +81,7 @@ export function Nav() {
                   display: "flex", alignItems: "center", gap: 5,
                 }}
               >
-                🎓 Viva Prep
+                Viva Prep
               </button>
             </nav>
           )}
@@ -298,7 +298,7 @@ export function Nav() {
                 color: "var(--ink)", fontSize: 15, cursor: "pointer", fontFamily: "inherit",
               }}
             >
-              🎓 Viva Prep
+              Viva Prep
             </button>
             <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
               <button
