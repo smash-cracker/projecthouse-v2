@@ -486,7 +486,7 @@ export default function AdminPage() {
   );
 
   const VivaSection = (
-    <div style={{ maxWidth: 780 }}>
+    <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Viva Data</h2>

@@ -546,11 +546,18 @@ export default function VivaPage() {
               </div>
             )}
 
-            {!loading && items.length === 0 && (
+            {!loading && items.length === 0 && isSearching && (
               <div style={{ textAlign: "center", padding: "80px 0", color: "var(--muted)" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🤔</div>
                 <div style={{ fontSize: 15, fontWeight: 500 }}>No questions match "{query}"</div>
                 <div style={{ fontSize: 13, marginTop: 6 }}>Try different keywords or clear the search.</div>
+              </div>
+            )}
+            {!loading && items.length === 0 && !isSearching && (
+              <div style={{ textAlign: "center", padding: "80px 0", color: "var(--muted)" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+                <div style={{ fontSize: 15, fontWeight: 500 }}>No questions yet</div>
+                <div style={{ fontSize: 13, marginTop: 6 }}>Please check out again later.</div>
               </div>
             )}
 
