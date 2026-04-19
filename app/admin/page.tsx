@@ -233,7 +233,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--paper)", paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", flexDirection: "column" }}>
       {/* Header */}
       <div style={{
         borderBottom: "1px solid var(--line)",
@@ -259,7 +259,85 @@ export default function AdminPage() {
         }}>Admin</span>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 28px", display: "grid", gridTemplateColumns: "1fr 380px", gap: 32, alignItems: "start" }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+
+        {/* Sidebar */}
+        <aside style={{
+          width: 280, flexShrink: 0,
+          borderRight: "1px solid var(--line)",
+          background: "var(--card)",
+          padding: "28px 20px",
+          overflowY: "auto",
+          position: "sticky", top: 61, height: "calc(100vh - 61px)",
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 20 }}>
+            Category Templates
+          </div>
+          <p style={{ margin: "0 0 20px", fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+            Default item names per category. Auto-fills the includes list when you pick a category. Prices are set per-project.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {CATEGORIES.map(c => (
+              <div key={c.id}>
+                <label style={labelStyle}>{c.label}</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  {(templates[c.id] ?? []).map((name, i) => (
+                    <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 26px", gap: 5 }}>
+                      <input
+                        style={{ ...inputStyle, fontSize: 12, padding: "6px 10px" }}
+                        value={name}
+                        onChange={e => setTemplates(prev => ({
+                          ...prev,
+                          [c.id]: prev[c.id].map((n, ni) => ni === i ? e.target.value : n),
+                        }))}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setTemplates(prev => ({
+                          ...prev,
+                          [c.id]: prev[c.id].filter((_, ni) => ni !== i),
+                        }))}
+                        style={{ ...iconBtn, width: "100%", height: 33 }}
+                      >
+                        <svg width="9" height="9" viewBox="0 0 14 14" fill="none">
+                          <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setTemplates(prev => ({ ...prev, [c.id]: [...(prev[c.id] ?? []), ""] }))}
+                    style={{
+                      padding: "5px", borderRadius: 7,
+                      border: "1px dashed var(--line)", background: "transparent",
+                      color: "var(--muted)", fontSize: 11, fontWeight: 600,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    + Add
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={saveTemplates}
+            disabled={savingTemplates}
+            style={{
+              marginTop: 24, padding: "10px", borderRadius: 10,
+              border: "none", background: accent, color: "var(--accent-ink)",
+              fontSize: 13, fontWeight: 700, cursor: "pointer",
+              fontFamily: "inherit", width: "100%",
+            }}
+          >
+            {savingTemplates ? "Saving…" : "Save Templates"}
+          </button>
+        </aside>
+
+        {/* Main content */}
+        <div style={{ flex: 1, padding: "40px 32px", overflowY: "auto" }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 360px", gap: 32, alignItems: "start" }}>
 
         {/* Form */}
         <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 32 }}>
@@ -444,71 +522,6 @@ export default function AdminPage() {
         {/* Right column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
-          {/* Category Templates */}
-          <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 24 }}>
-            <h3 style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 700 }}>Category Templates</h3>
-            <p style={{ margin: "0 0 16px", fontSize: 12, color: "var(--muted)" }}>
-              Default item names per category. Auto-fills the includes list when you pick a category. Prices are set per-project.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {CATEGORIES.map(c => (
-                <div key={c.id}>
-                  <label style={labelStyle}>{c.label}</label>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {(templates[c.id] ?? []).map((name, i) => (
-                      <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 30px", gap: 6 }}>
-                        <input
-                          style={{ ...inputStyle, fontSize: 12, padding: "7px 10px" }}
-                          value={name}
-                          onChange={e => setTemplates(prev => ({
-                            ...prev,
-                            [c.id]: prev[c.id].map((n, ni) => ni === i ? e.target.value : n),
-                          }))}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setTemplates(prev => ({
-                            ...prev,
-                            [c.id]: prev[c.id].filter((_, ni) => ni !== i),
-                          }))}
-                          style={{ ...iconBtn, width: "100%", height: 36 }}
-                        >
-                          <svg width="9" height="9" viewBox="0 0 14 14" fill="none">
-                            <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setTemplates(prev => ({ ...prev, [c.id]: [...(prev[c.id] ?? []), ""] }))}
-                      style={{
-                        padding: "6px", borderRadius: 8,
-                        border: "1px dashed var(--line)", background: "transparent",
-                        color: "var(--muted)", fontSize: 11, fontWeight: 600,
-                        cursor: "pointer", fontFamily: "inherit",
-                      }}
-                    >
-                      + Add
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={saveTemplates}
-              disabled={savingTemplates}
-              style={{
-                marginTop: 18, padding: "10px 18px", borderRadius: 10,
-                border: "none", background: accent, color: "var(--accent-ink)",
-                fontSize: 13, fontWeight: 700, cursor: "pointer",
-                fontFamily: "inherit", width: "100%",
-              }}
-            >
-              {savingTemplates ? "Saving…" : "Save Templates"}
-            </button>
-          </div>
-
           {/* Projects list */}
           <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 20, padding: 24 }}>
             <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>
@@ -554,7 +567,9 @@ export default function AdminPage() {
           </div>
 
         </div>{/* end right column */}
-      </div>
+        </div>{/* end grid */}
+        </div>{/* end main content */}
+      </div>{/* end sidebar+main wrapper */}
 
       {/* Toast */}
       {toast && (
