@@ -301,6 +301,7 @@ export function Hero() {
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 28, flexWrap: "wrap" }}>
               <button
+                className="nav-desktop"
                 onClick={() => document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" })}
                 style={{
                   padding: "16px 22px",
@@ -311,11 +312,8 @@ export function Hero() {
                   fontWeight: 600,
                   fontSize: 15,
                   cursor: "pointer",
-                  display: "inline-flex",
                   alignItems: "center",
                   gap: 10,
-                  flex: 1,
-                  justifyContent: "center",
                 }}
               >
                 Browse the catalog
