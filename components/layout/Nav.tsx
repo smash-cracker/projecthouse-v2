@@ -293,7 +293,7 @@ export function Nav() {
               onClick={() => { setVivaOpen(true); setMobileNavOpen(false); }}
               style={{
                 display: "block", width: "100%", textAlign: "left",
-                padding: "12px 4px", borderBottom: "1px solid var(--line)",
+                padding: "12px 4px",
                 background: "none", border: "none", borderBottom: "1px solid var(--line)",
                 color: "var(--ink)", fontSize: 15, cursor: "pointer", fontFamily: "inherit",
               }}
