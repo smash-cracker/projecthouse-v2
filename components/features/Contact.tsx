@@ -19,10 +19,10 @@ export function Contact() {
     {
       id: "wa",
       name: "WhatsApp",
-      handle: "+91 98765 43210",
+      handle: "+91 70127 19561",
       sub: "Chat · Mon–Sat · 10am–9pm IST",
       cta: "Open chat",
-      href: "https://wa.me/919876543210?text=Hi%20Project%20House%2C%20I%20have%20a%20question",
+      href: "https://wa.me/917012719561?text=Hi%20Project%20House%2C%20I%20have%20a%20question",
       bg: "#25D366",
       ink: "#0A0F2C",
       icon: (
@@ -34,10 +34,10 @@ export function Contact() {
     {
       id: "tg",
       name: "Telegram",
-      handle: "@projecthouse_in",
+      handle: "@projecthouse_admin",
       sub: "Live channel · daily drops · 2.4k members",
       cta: "Open channel",
-      href: "https://t.me/projecthouse_in",
+      href: "https://t.me/projecthouse_admin",
       bg: "#229ED9",
       ink: "#ffffff",
       icon: (
@@ -49,10 +49,10 @@ export function Contact() {
     {
       id: "ph",
       name: "Phone",
-      handle: "+91 98765 43210",
-      sub: "Mon–Sat · 10am–7pm IST · English & Hindi",
+      handle: "+91 70127 19561",
+      sub: "Mon–Sat · 10am–7pm IST · English",
       cta: "Call now",
-      href: "tel:+919876543210",
+      href: "tel:+917012719561",
       bg: "#0A0F2C",
       ink: "#F3F0E6",
       icon: (
@@ -64,10 +64,10 @@ export function Contact() {
     {
       id: "ml",
       name: "Email",
-      handle: "hello@projecthouse.dev",
+      handle: "collegeprojectshub@gmail.com",
       sub: "Replies in under 12 hours · invoices, custom work",
       cta: "Compose email",
-      href: "mailto:hello@projecthouse.dev?subject=Project%20House%20enquiry",
+      href: "mailto:collegeprojectshub@gmail.com?subject=Project%20House%20enquiry",
       bg: "#F6F4EE",
       ink: "#0A0F2C",
       icon: (

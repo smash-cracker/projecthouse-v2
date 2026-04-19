@@ -343,7 +343,7 @@ export function Hero() {
             <div style={{ display: "flex", gap: 36, marginTop: 40 }}>
               {[
                 { n: "48", l: "Capstone-ready projects" },
-                { n: "12k+", l: "Students shipped" },
+                { n: "150+", l: "Orders" },
                 { n: "4.8", l: "Avg. rating", star: true },
               ].map((s) => (
                 <div key={s.l}>

@@ -53,8 +53,8 @@ export const ABSTRACTS: Record<string, any> = {
 };
 
 export const BUNDLES = [
-  { id:'solo', name:'Solo Project', price:1499, tagline:'For a single capstone', features:['Pick any 1 project','Full source + dataset','Report + slides','Setup guide','7-day Q&A support'], cta:'Buy single project' },
-  { id:'portfolio', name:'Portfolio Pack', price:3999, featured:true, tagline:'For a graduating class', features:['Any 3 projects, any category','Full source + datasets','Reports + slide decks','Deployment walkthrough','30-day live support','Private mentor review call'], cta:'Get portfolio pack' },
+  { id:'portfolio', name:'Portfolio Pack', price:3999, tagline:'For a graduating class', features:['Any 3 projects, any category','Full source + datasets','Reports + slide decks','Deployment walkthrough','30-day live support','Private mentor review call'], cta:'Get portfolio pack' },
+  { id:'solo', name:'Solo Project', price:1499, featured:true, tagline:'For a single capstone', features:['Pick any 1 project','Full source + dataset','Report + slides','Setup guide','7-day Q&A support'], cta:'Buy single project' },
   { id:'studio', name:'Department Licence', price:14999, tagline:'For a cohort or institution', features:['All 48 projects, all updates','Classroom licence (up to 40 students)','Private help channel','Instructor deck + rubric','90-day priority support','Quarterly new-project drop'], cta:'Talk to us' },
 ];
 

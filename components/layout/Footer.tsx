@@ -20,7 +20,7 @@ export function Footer() {
             maxWidth: 1200,
           }}
         >
-          Ship it by <span style={{ fontStyle: "italic", color: accent }}>Friday.</span>
+          Get it by <span style={{ fontStyle: "italic", color: accent }}>Today.</span>
         </h3>
         <div
           style={{
@@ -79,19 +79,19 @@ export function Footer() {
           </div>
           {(
             [
-            [
-              "Catalog",
               [
-                "All projects",
-                "Machine Learning",
-                "Deep Learning",
-                "Computer Vision",
-                "Web apps",
-                "Mobile apps",
+                "Catalog",
+                [
+                  "All projects",
+                  "Machine Learning",
+                  "Deep Learning",
+                  "Computer Vision",
+                  "Web apps",
+                  "Mobile apps",
+                ],
               ],
-            ],
-            ["Students", ["Pricing", "Student discount", "Viva prep", "Live support", "FAQ"]],
-            ["Company", ["About", "For colleges", "Affiliate", "Contact", "Terms"]],
+              ["Students", ["Pricing", "Student discount", "Viva prep", "Live support", "FAQ"]],
+              ["Company", ["About", "For colleges", "Affiliate", "Contact", "Terms"]],
             ] as [string, string[]][]
           ).map(([h, items]) => (
             <div key={h}>
