@@ -212,6 +212,12 @@ export function Nav() {
                             Signed in with {user.provider}
                           </div>
                         </div>
+                        {user.isAdmin && (
+                          <a href="/admin" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13, color: accent, textDecoration: "none", fontWeight: 600 }}>
+                            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/><rect x="8" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/><rect x="1" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/><rect x="8" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/></svg>
+                            Admin Dashboard
+                          </a>
+                        )}
                         {["My projects", "Favorites"].map((x) => (
                           <a key={x} href="#" style={{ display: "block", padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
                             {x}
@@ -320,6 +326,19 @@ export function Nav() {
                     </div>
                     <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{user.email}</div>
                   </div>
+                  {user.isAdmin && (
+                    <a
+                      href="/admin"
+                      onClick={() => setMobileNavOpen(false)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 8,
+                        padding: "10px 4px", borderBottom: "1px solid var(--line)",
+                        textDecoration: "none", color: accent, fontSize: 14, fontWeight: 600,
+                      }}
+                    >
+                      Admin Dashboard
+                    </a>
+                  )}
                   {["My projects", "Favorites"].map((x) => (
                     <a
                       key={x}
