@@ -20,7 +20,7 @@ export function Footer() {
             maxWidth: 1200,
           }}
         >
-          Get it by <span style={{ fontStyle: "italic", color: accent }}>Today.</span>
+          Get it by <span style={{ fontStyle: "italic", color: accent }}>Tomorrow</span>
         </h3>
         <div
           style={{
