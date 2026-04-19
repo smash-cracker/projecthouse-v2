@@ -30,7 +30,7 @@ export function AuthModal() {
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 150, display: "grid", placeItems: "center", padding: 20 }}
+      style={{ position: "fixed", inset: 0, zIndex: 600, display: "grid", placeItems: "center", padding: 20 }}
       onClick={() => onClose(false)}
     >
       <div style={{ position: "absolute", inset: 0, background: "#0A0F2C90", backdropFilter: "blur(6px)" }} />
