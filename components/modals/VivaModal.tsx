@@ -85,7 +85,7 @@ const TypingDots = () => (
   </span>
 );
 
-function ChatPanel({ accent }: { accent: string }) {
+function ChatPanel({ accent, isMobile }: { accent: string; isMobile: boolean }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -162,7 +162,7 @@ function ChatPanel({ accent }: { accent: string }) {
       <div
         className="scroll"
         style={{
-          flex: 1, overflowY: "auto", padding: isEmpty ? "0" : "28px 32px 12px",
+          flex: 1, overflowY: "auto", padding: isEmpty ? "0" : isMobile ? "16px 12px 8px" : "28px 32px 12px",
           display: "flex", flexDirection: "column", gap: 24,
         }}
       >
@@ -170,7 +170,7 @@ function ChatPanel({ accent }: { accent: string }) {
         {isEmpty && (
           <div style={{
             display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", height: "100%", gap: 28, padding: "32px",
+            justifyContent: "center", height: "100%", gap: 20, padding: isMobile ? "20px 16px" : "32px",
           }}>
             <div style={{
               width: 64, height: 64, borderRadius: 20, background: accent,
@@ -192,7 +192,7 @@ function ChatPanel({ accent }: { accent: string }) {
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: 420 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: isMobile ? "100%" : 420 }}>
               <div className="mono" style={{ fontSize: 10, color: "var(--muted)", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 2 }}>
                 Try asking
               </div>
@@ -230,7 +230,7 @@ function ChatPanel({ accent }: { accent: string }) {
             <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: isUser ? "row-reverse" : "row" }}>
               {isUser ? <UserAvatar /> : <BotAvatar accent={accent} />}
 
-              <div style={{ maxWidth: "75%", display: "flex", flexDirection: "column", gap: 4, alignItems: isUser ? "flex-end" : "flex-start" }}>
+              <div style={{ maxWidth: isMobile ? "88%" : "75%", display: "flex", flexDirection: "column", gap: 4, alignItems: isUser ? "flex-end" : "flex-start" }}>
                 <div className="mono" style={{ fontSize: 10, color: "var(--muted)", letterSpacing: ".08em", textTransform: "uppercase", paddingInline: 4 }}>
                   {isUser ? "You" : "Project Bot"}
                 </div>
@@ -278,7 +278,7 @@ function ChatPanel({ accent }: { accent: string }) {
 
       {/* Input bar */}
       <div style={{
-        borderTop: "1px solid var(--line)", padding: "14px 20px",
+        borderTop: "1px solid var(--line)", padding: isMobile ? "10px 12px" : "14px 20px",
         background: "var(--paper)",
       }}>
         <div style={{
@@ -322,9 +322,11 @@ function ChatPanel({ accent }: { accent: string }) {
             </svg>
           </button>
         </div>
-        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7, paddingInline: 4 }}>
-          Enter to send · Shift+Enter for new line
-        </div>
+        {!isMobile && (
+          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7, paddingInline: 4 }}>
+            Enter to send · Shift+Enter for new line
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -495,7 +497,7 @@ export function VivaModal() {
         {/* Content area */}
         {isBot ? (
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <ChatPanel accent={accent} />
+            <ChatPanel accent={accent} isMobile={isMobile} />
           </div>
         ) : (
           <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px" : "24px 32px" }}>
