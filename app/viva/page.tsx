@@ -2,8 +2,12 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useProjectHouse } from "@/components/providers/ThemeProvider";
-import { VIVA_TABS, VIVA_QA } from "@/lib/data";
+import { createClient } from "@/utils/supabase/client";
+import { VIVA_TABS } from "@/lib/data";
 import { useIsMobile } from "@/hooks/useIsMobile";
+
+type VivaRow = { id: string; question: string; answer: string; order_index: number };
+const supabase = createClient();
 
 // ——— Shared sub-components ——————————————————————————————————
 
@@ -332,17 +336,35 @@ export default function VivaPage() {
   const [tab, setTab] = useState("ml");
   const [query, setQuery] = useState("");
   const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [rows, setRows] = useState<VivaRow[]>([]);
+  const [allRows, setAllRows] = useState<VivaRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const switchTab = (id: string) => { setTab(id); setOpenIdx(null); setQuery(""); };
+  useEffect(() => {
+    async function fetchAll() {
+      setLoading(true);
+      const { data } = await supabase
+        .from("viva_qa")
+        .select("id, question, answer, order_index, cat")
+        .order("order_index", { ascending: true });
+      setAllRows((data as any[]) ?? []);
+      setLoading(false);
+    }
+    fetchAll();
+  }, []);
+
+  useEffect(() => {
+    setRows(allRows.filter((r: any) => r.cat === tab));
+    setOpenIdx(null);
+  }, [tab, allRows]);
+
+  const switchTab = (id: string) => { setTab(id); setQuery(""); };
 
   const isBot = tab === "bot";
   const q = query.trim().toLowerCase();
-  const allForTab = VIVA_QA[tab] || [];
-  const items = q
-    ? Object.values(VIVA_QA).flat().filter((item) =>
-        item.q.toLowerCase().includes(q) || item.a.toLowerCase().includes(q)
-      )
-    : allForTab;
+  const items: VivaRow[] = q
+    ? allRows.filter((r: any) => r.question.toLowerCase().includes(q) || r.answer.toLowerCase().includes(q))
+    : rows;
   const isSearching = q.length > 0;
 
   return (
@@ -433,7 +455,7 @@ export default function VivaPage() {
           }}>
             {VIVA_TABS.map((t) => {
               const active = tab === t.id;
-              const count = (VIVA_QA[t.id] || []).length;
+              const count = allRows.filter((r: any) => r.cat === t.id).length;
               return (
                 <button
                   key={t.id}
@@ -515,13 +537,16 @@ export default function VivaPage() {
           </div>
         ) : (
           <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px" : "24px 32px" }}>
-            {isSearching && (
+            {loading && (
+              <div style={{ textAlign: "center", padding: "80px 0", color: "var(--muted)", fontSize: 13 }}>Loading…</div>
+            )}
+            {!loading && isSearching && (
               <div style={{ marginBottom: 20, fontSize: 13, color: "var(--muted)" }}>
                 {items.length} result{items.length !== 1 ? "s" : ""} for <strong style={{ color: "var(--ink)" }}>"{query}"</strong>
               </div>
             )}
 
-            {items.length === 0 && (
+            {!loading && items.length === 0 && (
               <div style={{ textAlign: "center", padding: "80px 0", color: "var(--muted)" }}>
                 <div style={{ fontSize: 40, marginBottom: 12 }}>🤔</div>
                 <div style={{ fontSize: 15, fontWeight: 500 }}>No questions match "{query}"</div>
@@ -558,7 +583,7 @@ export default function VivaPage() {
                           color: isOpen ? "var(--accent-ink)" : "var(--muted)",
                           padding: "2px 7px", borderRadius: 5, flexShrink: 0, transition: "all .15s",
                         }}>Q{i + 1}</span>
-                        {item.q}
+                        {item.question}
                       </div>
                       <span style={{
                         width: 24, height: 24, borderRadius: "50%",
@@ -575,7 +600,7 @@ export default function VivaPage() {
                     {isOpen && (
                       <div style={{ padding: "0 20px 16px", display: "flex", gap: 12, alignItems: "start", borderTop: "1px solid var(--line)" }}>
                         <span className="mono" style={{ fontSize: 10, background: "var(--paper)", color: "var(--muted)", padding: "2px 7px", borderRadius: 5, flexShrink: 0, marginTop: 14 }}>ANS</span>
-                        <p style={{ margin: "12px 0 0", fontSize: 14, color: "var(--muted)", lineHeight: 1.75 }}>{item.a}</p>
+                        <p style={{ margin: "12px 0 0", fontSize: 14, color: "var(--muted)", lineHeight: 1.75 }}>{item.answer}</p>
                       </div>
                     )}
                   </div>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useProjectHouse } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { VIVA_TABS, VIVA_QA } from "@/lib/data";
+import { VIVA_TABS } from "@/lib/data";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,7 +38,7 @@ const DEFAULT_TEMPLATES: Record<string, string[]> = {
 };
 
 type IncludeItem = { name: string; price: string };
-type QA = { q: string; a: string };
+type QA = { id: string; cat: string; question: string; answer: string; order_index: number };
 type Section = "projects" | "templates" | "viva";
 
 const EMPTY_FORM = {
@@ -98,13 +98,14 @@ export default function AdminPage() {
   const [savingTemplates, setSavingTemplates] = useState(false);
 
   // Viva state
-  const [vivaData, setVivaData] = useState<Record<string, QA[]>>({});
+  const [vivaRows, setVivaRows] = useState<QA[]>([]);
   const [vivaTab, setVivaTab] = useState("ml");
-  const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState<QA>({ q: "", a: "" });
-  const [addForm, setAddForm] = useState<QA>({ q: "", a: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ question: "", answer: "" });
+  const [addForm, setAddForm] = useState({ question: "", answer: "" });
   const [addingNew, setAddingNew] = useState(false);
   const [savingViva, setSavingViva] = useState(false);
+  const [vivaLoading, setVivaLoading] = useState(false);
 
   // Auth guard
   useEffect(() => {
@@ -117,15 +118,12 @@ export default function AdminPage() {
     try {
       const tmpl = localStorage.getItem("admin_cat_templates");
       if (tmpl) setTemplates({ ...DEFAULT_TEMPLATES, ...JSON.parse(tmpl) });
-      const viva = localStorage.getItem("admin_viva_qa");
-      setVivaData(viva ? JSON.parse(viva) : structuredClone(VIVA_QA));
-    } catch {
-      setVivaData(structuredClone(VIVA_QA));
-    }
+    } catch {}
     return () => clearTimeout(t);
   }, []);
 
   useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => { fetchViva(); }, [vivaTab]);
 
   async function fetchProjects() {
     const { data } = await supabase
@@ -213,44 +211,65 @@ export default function AdminPage() {
 
   // ── Viva ─────────────────────────────────────────────────────────────────────
 
-  function persistViva(next: Record<string, QA[]>) {
-    setVivaData(next);
-    localStorage.setItem("admin_viva_qa", JSON.stringify(next));
+  async function fetchViva() {
+    setVivaLoading(true);
+    const { data } = await supabase
+      .from("viva_qa")
+      .select("id, cat, question, answer, order_index")
+      .eq("cat", vivaTab)
+      .order("order_index", { ascending: true });
+    setVivaRows(data ?? []);
+    setVivaLoading(false);
   }
 
-  function startEdit(idx: number) {
-    setEditingIdx(idx);
-    setEditForm({ ...vivaData[vivaTab][idx] });
+  function startEdit(row: QA) {
+    setEditingId(row.id);
+    setEditForm({ question: row.question, answer: row.answer });
     setAddingNew(false);
   }
 
-  function cancelEdit() { setEditingIdx(null); }
+  function cancelEdit() { setEditingId(null); }
 
-  function saveEdit() {
-    if (!editForm.q.trim() || !editForm.a.trim()) { showToast("❌ Question and answer are required", false); return; }
+  async function saveEdit() {
+    if (!editForm.question.trim() || !editForm.answer.trim()) {
+      showToast("❌ Question and answer are required", false); return;
+    }
     setSavingViva(true);
-    const next = { ...vivaData, [vivaTab]: vivaData[vivaTab].map((qa, i) => i === editingIdx ? editForm : qa) };
-    persistViva(next);
-    setEditingIdx(null);
+    const { error } = await supabase
+      .from("viva_qa")
+      .update({ question: editForm.question, answer: editForm.answer })
+      .eq("id", editingId);
     setSavingViva(false);
+    if (error) { showToast("❌ " + error.message, false); return; }
+    setEditingId(null);
     showToast("✅ Question updated!");
+    fetchViva();
   }
 
-  function deleteQA(idx: number) {
-    const next = { ...vivaData, [vivaTab]: vivaData[vivaTab].filter((_, i) => i !== idx) };
-    persistViva(next);
+  async function deleteQA(id: string) {
+    const { error } = await supabase.from("viva_qa").delete().eq("id", id);
+    if (error) { showToast("❌ " + error.message, false); return; }
     showToast("🗑 Question deleted");
+    fetchViva();
   }
 
-  function saveAdd() {
-    if (!addForm.q.trim() || !addForm.a.trim()) { showToast("❌ Question and answer are required", false); return; }
+  async function saveAdd() {
+    if (!addForm.question.trim() || !addForm.answer.trim()) {
+      showToast("❌ Question and answer are required", false); return;
+    }
     setSavingViva(true);
-    const next = { ...vivaData, [vivaTab]: [...(vivaData[vivaTab] ?? []), addForm] };
-    persistViva(next);
-    setAddForm({ q: "", a: "" });
-    setAddingNew(false);
+    const { error } = await supabase.from("viva_qa").insert({
+      cat: vivaTab,
+      question: addForm.question,
+      answer: addForm.answer,
+      order_index: vivaRows.length,
+    });
     setSavingViva(false);
+    if (error) { showToast("❌ " + error.message, false); return; }
+    setAddForm({ question: "", answer: "" });
+    setAddingNew(false);
     showToast("✅ Question added!");
+    fetchViva();
   }
 
   if (!loaded) return null;
@@ -466,8 +485,6 @@ export default function AdminPage() {
     </div>
   );
 
-  const currentQAs = vivaData[vivaTab] ?? [];
-
   const VivaSection = (
     <div style={{ maxWidth: 780 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
@@ -476,7 +493,7 @@ export default function AdminPage() {
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)" }}>Manage viva prep questions per category.</p>
         </div>
         <button
-          onClick={() => { setAddingNew(true); setEditingIdx(null); setAddForm({ q: "", a: "" }); }}
+          onClick={() => { setAddingNew(true); setEditingId(null); setAddForm({ question: "", answer: "" }); }}
           style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: accent, color: "var(--accent-ink)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
           + Add Question
         </button>
@@ -487,10 +504,9 @@ export default function AdminPage() {
         {VIVA_TABS.map(t => {
           const active = vivaTab === t.id;
           return (
-            <button key={t.id} onClick={() => { setVivaTab(t.id); setEditingIdx(null); setAddingNew(false); }}
+            <button key={t.id} onClick={() => { setVivaTab(t.id); setEditingId(null); setAddingNew(false); }}
               style={{ padding: "8px 16px", borderRadius: 999, border: "1px solid var(--line)", fontFamily: "inherit", fontSize: 13, fontWeight: active ? 600 : 400, cursor: "pointer", background: active ? accent : "var(--card)", color: active ? "var(--accent-ink)" : "var(--ink)", display: "flex", alignItems: "center", gap: 6 }}>
               <span>{t.icon}</span> {t.label}
-              <span style={{ fontSize: 11, opacity: 0.7 }}>({(vivaData[t.id] ?? []).length})</span>
             </button>
           );
         })}
@@ -503,16 +519,16 @@ export default function AdminPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div>
               <label style={labelStyle}>Question *</label>
-              <input style={inputStyle} value={addForm.q} onChange={e => setAddForm(f => ({ ...f, q: e.target.value }))} placeholder="Enter the viva question..." />
+              <input style={inputStyle} value={addForm.question} onChange={e => setAddForm(f => ({ ...f, question: e.target.value }))} placeholder="Enter the viva question..." />
             </div>
             <div>
               <label style={labelStyle}>Answer *</label>
-              <textarea rows={4} style={{ ...inputStyle, resize: "vertical" }} value={addForm.a} onChange={e => setAddForm(f => ({ ...f, a: e.target.value }))} placeholder="Enter the answer..." />
+              <textarea rows={4} style={{ ...inputStyle, resize: "vertical" }} value={addForm.answer} onChange={e => setAddForm(f => ({ ...f, answer: e.target.value }))} placeholder="Enter the answer..." />
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={saveAdd} disabled={savingViva}
                 style={{ padding: "9px 20px", borderRadius: 9, border: "none", background: accent, color: "var(--accent-ink)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                Save
+                {savingViva ? "Saving…" : "Save"}
               </button>
               <button onClick={() => setAddingNew(false)}
                 style={{ padding: "9px 16px", borderRadius: 9, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
@@ -524,7 +540,9 @@ export default function AdminPage() {
       )}
 
       {/* Questions list */}
-      {currentQAs.length === 0 ? (
+      {vivaLoading ? (
+        <div style={{ textAlign: "center", padding: "40px 0", color: "var(--muted)", fontSize: 13 }}>Loading…</div>
+      ) : vivaRows.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "var(--muted)", border: "1px dashed var(--line)", borderRadius: 16 }}>
           <div style={{ fontSize: 32, marginBottom: 10 }}>🎓</div>
           <div style={{ fontSize: 14, fontWeight: 500 }}>No questions yet</div>
@@ -532,25 +550,24 @@ export default function AdminPage() {
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {currentQAs.map((qa, i) => (
-            <div key={i} style={{ border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", background: "var(--card)", boxShadow: editingIdx === i ? `0 0 0 2px ${accent}` : "none" }}>
-              {editingIdx === i ? (
-                /* Edit form */
+          {vivaRows.map((qa, i) => (
+            <div key={qa.id} style={{ border: "1px solid var(--line)", borderRadius: 14, overflow: "hidden", background: "var(--card)", boxShadow: editingId === qa.id ? `0 0 0 2px ${accent}` : "none" }}>
+              {editingId === qa.id ? (
                 <div style={{ padding: 20 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: accent, marginBottom: 14, letterSpacing: ".04em", textTransform: "uppercase" }}>Editing Q{i + 1}</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <div>
                       <label style={labelStyle}>Question</label>
-                      <input style={inputStyle} value={editForm.q} onChange={e => setEditForm(f => ({ ...f, q: e.target.value }))} />
+                      <input style={inputStyle} value={editForm.question} onChange={e => setEditForm(f => ({ ...f, question: e.target.value }))} />
                     </div>
                     <div>
                       <label style={labelStyle}>Answer</label>
-                      <textarea rows={4} style={{ ...inputStyle, resize: "vertical" }} value={editForm.a} onChange={e => setEditForm(f => ({ ...f, a: e.target.value }))} />
+                      <textarea rows={4} style={{ ...inputStyle, resize: "vertical" }} value={editForm.answer} onChange={e => setEditForm(f => ({ ...f, answer: e.target.value }))} />
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={saveEdit} disabled={savingViva}
                         style={{ padding: "9px 20px", borderRadius: 9, border: "none", background: accent, color: "var(--accent-ink)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                        Save
+                        {savingViva ? "Saving…" : "Save"}
                       </button>
                       <button onClick={cancelEdit}
                         style={{ padding: "9px 16px", borderRadius: 9, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
@@ -560,24 +577,20 @@ export default function AdminPage() {
                   </div>
                 </div>
               ) : (
-                /* View row */
                 <div style={{ padding: "16px 20px" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 10, background: "var(--line)", color: "var(--muted)", padding: "2px 7px", borderRadius: 5, fontWeight: 600, flexShrink: 0 }}>
-                          Q{i + 1}
-                        </span>
-                        <span style={{ fontSize: 14, fontWeight: 500 }}>{qa.q}</span>
+                        <span style={{ fontSize: 10, background: "var(--line)", color: "var(--muted)", padding: "2px 7px", borderRadius: 5, fontWeight: 600, flexShrink: 0 }}>Q{i + 1}</span>
+                        <span style={{ fontSize: 14, fontWeight: 500 }}>{qa.question}</span>
                       </div>
-                      <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", lineHeight: 1.7, paddingLeft: 36 }}>{qa.a}</p>
+                      <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", lineHeight: 1.7, paddingLeft: 36 }}>{qa.answer}</p>
                     </div>
                     <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => startEdit(i)} style={{ ...iconBtn, color: accent, borderColor: accent }}
-                        title="Edit">
+                      <button onClick={() => startEdit(qa)} style={{ ...iconBtn, color: accent, borderColor: accent }} title="Edit">
                         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>
                       </button>
-                      <button onClick={() => deleteQA(i)} style={iconBtn} title="Delete">
+                      <button onClick={() => deleteQA(qa.id)} style={iconBtn} title="Delete">
                         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
                       </button>
                     </div>
