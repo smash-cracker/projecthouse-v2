@@ -99,3 +99,17 @@ a{
   .nav-mobile-block { display: none !important; }
 }
 
+/* ── Hero grid ── */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+@media (min-width: 768px) {
+  .hero-grid {
+    grid-template-columns: 1.1fr 1fr;
+    gap: 56px;
+  }
+}
+
+

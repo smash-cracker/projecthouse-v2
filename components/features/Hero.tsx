@@ -4,7 +4,6 @@ import React from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { ArrowUpRight, Star } from "../ui/icons";
 import { PROJECTS } from "@/lib/data";
-import { useIsMobile } from "../../hooks/useIsMobile";
 
 function ThumbArt({ kind, accent, color }: { kind: string; accent: string; color: string }) {
   const bg = color && color !== "#FF8A5C" ? color : "var(--indigo-deep)";
@@ -218,7 +217,6 @@ function ThumbCollage({ thumbs, accent }: { thumbs: any[]; accent: string }) {
 
 export function Hero() {
   const { accent } = useProjectHouse();
-  const isMobile = useIsMobile();
   const thumbs = PROJECTS.slice(0, 6);
 
   return (
@@ -235,7 +233,7 @@ export function Hero() {
           WebkitMaskImage: "radial-gradient(ellipse 80% 70% at 50% 30%, #000 40%, transparent 85%)",
         }}
       />
-      <div style={{ maxWidth: 1320, margin: "0 auto", padding: isMobile ? "28px 16px 40px" : "40px 28px 60px", position: "relative" }}>
+      <div style={{ maxWidth: 1320, margin: "0 auto", padding: "clamp(28px,4vw,60px) clamp(16px,2.5vw,28px)", position: "relative" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
           <span
             style={{
@@ -267,7 +265,7 @@ export function Hero() {
           className="serif"
           style={{
             margin: 0,
-            fontSize: isMobile ? "clamp(38px, 10vw, 56px)" : "clamp(56px, 8.2vw, 128px)",
+            fontSize: "clamp(38px, 8.2vw, 128px)",
             lineHeight: 0.95,
             letterSpacing: "-.02em",
             maxWidth: 1200,
@@ -290,16 +288,14 @@ export function Hero() {
         </h1>
 
         <div
+          className="hero-grid"
           style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1.1fr 1fr",
-            gap: isMobile ? 32 : 56,
             marginTop: 44,
             alignItems: "end",
           }}
         >
           <div>
-            <p style={{ fontSize: isMobile ? 16 : 18, lineHeight: 1.55, color: "var(--muted)", maxWidth: 520, margin: 0 }}>
+            <p style={{ fontSize: "clamp(15px,2vw,18px)", lineHeight: 1.55, color: "var(--muted)", maxWidth: 520, margin: 0 }}>
               Machine Learning, deep learning, computer vision, full-stack web, and mobile — every project ships with source, dataset,
               a viva-ready report, and a human to answer your doubts.
             </p>
@@ -318,8 +314,8 @@ export function Hero() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 10,
-                  flex: isMobile ? 1 : undefined,
-                  justifyContent: isMobile ? "center" : undefined,
+                  flex: 1,
+                  justifyContent: "center",
                 }}
               >
                 Browse the catalog
@@ -347,20 +343,20 @@ export function Hero() {
                   fontWeight: 500,
                   fontSize: 15,
                   cursor: "pointer",
-                  flex: isMobile ? 1 : undefined,
+                  flex: 1,
                 }}
               >
                 How it works →
               </button>
             </div>
-            <div style={{ display: "flex", gap: isMobile ? 20 : 36, marginTop: 40, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "clamp(20px,3.5vw,36px)", marginTop: 40, flexWrap: "wrap" }}>
               {[
                 { n: "48", l: "Capstone-ready projects" },
                 { n: "150+", l: "Orders" },
                 { n: "4.8", l: "Avg. rating", star: true },
               ].map((s) => (
                 <div key={s.l}>
-                  <div className="serif" style={{ fontSize: isMobile ? 40 : 56, lineHeight: 1, display: "flex", alignItems: "baseline", gap: 6 }}>
+                  <div className="serif" style={{ fontSize: "clamp(36px,5vw,56px)", lineHeight: 1, display: "flex", alignItems: "baseline", gap: 6 }}>
                     {s.n}
                     {s.star && <Star size={18} />}
                   </div>
@@ -370,12 +366,10 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Collage hidden on mobile */}
-          {!isMobile && (
-            <div style={{ position: "relative", height: 460 }}>
-              <ThumbCollage thumbs={thumbs} accent={accent} />
-            </div>
-          )}
+          {/* Collage — hidden on mobile via CSS */}
+          <div className="nav-desktop" style={{ position: "relative", height: 460, flex: 1 }}>
+            <ThumbCollage thumbs={thumbs} accent={accent} />
+          </div>
         </div>
       </div>
 
