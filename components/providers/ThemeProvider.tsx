@@ -10,6 +10,7 @@ interface User {
   email: string;
   handle: string;
   avatar: string;
+  isAdmin: boolean;
 }
 
 interface ProjectHouseState {
@@ -50,6 +51,7 @@ function supabaseUserToUser(sbUser: any): User | null {
     email: sbUser.email ?? "",
     handle: meta.user_name ?? meta.preferred_username ?? sbUser.email ?? "",
     avatar: initials,
+    isAdmin: sbUser.app_metadata?.role === "admin",
   };
 }
 

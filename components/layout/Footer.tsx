@@ -148,7 +148,7 @@ export function Footer() {
           }}
         >
           <span>© 2026 Project House. Built for people who build.</span>
-          {!isMobile && <span className="mono">v2.4 · 48 projects · last drop 03 Apr</span>}
+          {!isMobile && <span className="mono">v1.0 · 48 projects · last drop 03 Apr</span>}
         </div>
       </div>
     </footer>
