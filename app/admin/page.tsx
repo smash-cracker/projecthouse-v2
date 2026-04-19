@@ -5,6 +5,7 @@ import { useProjectHouse } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { VIVA_TABS } from "@/lib/data";
+import { toast } from "sonner";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -84,7 +85,6 @@ export default function AdminPage() {
 
   const [section, setSection] = useState<Section>("projects");
   const [loaded, setLoaded] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
   // Projects state
   const [form, setForm] = useState(EMPTY_FORM);
@@ -134,8 +134,8 @@ export default function AdminPage() {
   }
 
   function showToast(msg: string, ok = true) {
-    setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3000);
+    if (ok) toast.success(msg);
+    else toast.error(msg);
   }
 
   // ── Projects ────────────────────────────────────────────────────────────────
@@ -656,12 +656,6 @@ export default function AdminPage() {
         </main>
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", background: toast.ok ? "var(--ink)" : "#7B1D1D", color: toast.ok ? "var(--paper)" : "#fff", padding: "12px 20px", borderRadius: 12, fontSize: 14, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,.25)", zIndex: 999, whiteSpace: "nowrap" }}>
-          {toast.msg}
-        </div>
-      )}
     </div>
   );
 }

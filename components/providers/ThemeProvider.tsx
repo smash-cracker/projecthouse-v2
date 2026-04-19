@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { AppToaster } from "@/components/ui/AppToaster";
 import { TWEAK_DEFAULTS } from "@/lib/data";
 import { createClient } from "@/utils/supabase/client";
 
@@ -162,6 +163,7 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
       }}
     >
       {children}
+      <AppToaster />
     </ProjectHouseContext.Provider>
   );
 }
