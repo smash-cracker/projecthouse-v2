@@ -22,7 +22,7 @@ const Stat = ({ n, l }: { n: number | string; l: string }) => (
 );
 
 export function Drawer() {
-  const { openedProject: project, setOpenedProject, accent, purchasedProjectIds, refreshPurchases } = useProjectHouse();
+  const { openedProject: project, setOpenedProject, accent, purchasedProjectIds, refreshPurchases, user, setAuthOpen } = useProjectHouse();
   const [tab, setTab] = useState("overview");
   const [demoOpen, setDemoOpen] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<{ paymentId: string; amount: number } | null>(null);
@@ -292,9 +292,9 @@ export function Drawer() {
                 href={`/projects/${(p as any).id}`}
                 style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center", textDecoration: "none" }}
               >
-                Open project <ArrowUpRight />
+                Go to course <ArrowUpRight />
               </a>
-            ) : (
+            ) : user ? (
               <RazorpayButton
                 amount={(customTotal || (p as any).price) * 100}
                 name="Project House"
@@ -308,8 +308,15 @@ export function Drawer() {
                 onFailure={(err) => setPaymentFailure({ description: (err as any)?.description })}
                 style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center" }}
               >
-                Get this project <ArrowUpRight />
+                Get this course <ArrowUpRight />
               </RazorpayButton>
+            ) : (
+              <button
+                onClick={() => setAuthOpen(true)}
+                style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center" }}
+              >
+                Sign in to purchase <ArrowUpRight />
+              </button>
             )}
           </div>
         </div>
