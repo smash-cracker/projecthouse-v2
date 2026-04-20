@@ -554,40 +554,30 @@ export function Drawer() {
           <div style={{ marginTop: 24, minHeight: 220 }}>
             {tab === "overview" && (
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
-                {ADD_ONS.map((item) => {
-                  const on = sel[item.id];
-                  return (
-                    <li
-                      key={item.id}
-                      onClick={() => toggleAddon(item.id)}
-                      style={{
-                        display: "flex", alignItems: "start", gap: 10, fontSize: 14,
-                        padding: "14px 16px", background: "var(--card)",
-                        border: "1px solid var(--line)", borderRadius: 10,
-                        cursor: item.required ? "default" : "pointer",
-                        userSelect: "none",
-                        opacity: on ? 1 : 0.45,
-                        transition: "opacity .15s",
-                      }}
-                    >
-                      <span style={{
-                        width: 20, height: 20, borderRadius: "50%",
-                        background: on ? accent : "var(--line)",
-                        display: "grid", placeItems: "center", flexShrink: 0, marginTop: 1,
-                        transition: "background .15s",
-                      }}>
-                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                          <path d="M1 4l3 3 5-6" stroke={on ? "var(--accent-ink)" : "var(--muted)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
-                      <span style={{ flex: 1 }}>
-                        <span style={{ display: "block" }}>{item.label}</span>
-                        <span style={{ fontSize: 11, color: "var(--muted)" }}>{item.desc}</span>
-                      </span>
-                      <span style={{ fontSize: 12, color: "var(--muted)", flexShrink: 0 }}>₹{item.price}</span>
-                    </li>
-                  );
-                })}
+                {(p.includes ?? []).map((item: { name: string; price: number }, i: number) => (
+                  <li
+                    key={i}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 12, fontSize: 14,
+                      padding: "14px 16px", background: "var(--card)",
+                      border: "1px solid var(--line)", borderRadius: 10,
+                    }}
+                  >
+                    <span style={{
+                      width: 20, height: 20, borderRadius: "50%",
+                      background: accent,
+                      display: "grid", placeItems: "center", flexShrink: 0,
+                    }}>
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4l3 3 5-6" stroke="var(--accent-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <span style={{ flex: 1 }}>{item.name}</span>
+                    <span style={{ fontSize: 12, color: "var(--muted)", flexShrink: 0 }}>
+                      {item.price > 0 ? `₹${item.price.toLocaleString("en-IN")}` : "Bundled"}
+                    </span>
+                  </li>
+                ))}
               </ul>
             )}
             {tab === "abstract" && <AbstractPanel p={p} />}
