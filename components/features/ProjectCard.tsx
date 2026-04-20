@@ -352,7 +352,7 @@ export function ProjectCard({
         </div>
         <h3 style={{ fontSize: 18, lineHeight: 1.25, margin: 0, letterSpacing: "-.01em", fontWeight: 600 }}>{p.title}</h3>
         <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5, margin: "8px 0 0", flex: 1 }}>
-          {p.desc.length > 110 ? p.desc.slice(0, 110) + "…" : p.desc}
+          {p.description?.length > 110 ? p.description.slice(0, 110) + "…" : p.description}
         </p>
         <div
           style={{
