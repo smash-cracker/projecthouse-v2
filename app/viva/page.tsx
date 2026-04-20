@@ -88,22 +88,16 @@ const TypingDots = () => (
 
 function ProjectPicker({
   projects,
-  query,
   activeIdx,
   accent,
   onSelect,
 }: {
   projects: PurchasedProject[];
-  query: string;
   activeIdx: number;
   accent: string;
   onSelect: (p: PurchasedProject) => void;
 }) {
-  const filtered = query
-    ? projects.filter((p) => p.title.toLowerCase().includes(query.toLowerCase()))
-    : projects;
-
-  if (filtered.length === 0) return null;
+  if (projects.length === 0) return null;
 
   return (
     <div
@@ -125,7 +119,7 @@ function ProjectPicker({
       }}>
         Your projects — type to filter
       </div>
-      {filtered.map((p, i) => (
+      {projects.map((p, i) => (
         <button
           key={p.id}
           onMouseDown={(e) => { e.preventDefault(); onSelect(p); }}
@@ -147,7 +141,7 @@ function ProjectPicker({
             fontSize: 9, fontWeight: 700, flexShrink: 0,
             transition: "background .1s, color .1s",
           }}>
-            {p.id.toUpperCase()}
+            {p.title.slice(0, 2).toUpperCase()}
           </span>
           <span style={{
             fontSize: 13, color: "var(--ink)", fontFamily: "inherit",
@@ -176,6 +170,7 @@ function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedPro
   const [contextProject, setContextProject] = useState<PurchasedProject | null>(null);
   // @ picker state
   const [atQuery, setAtQuery] = useState<string | null>(null); // null = picker closed
+  const [atStart, setAtStart] = useState<number>(0); // index of the @ character in input
   const [pickerIdx, setPickerIdx] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -185,22 +180,18 @@ function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedPro
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Derive filtered list from atQuery
   const pickerProjects = atQuery !== null
     ? (atQuery ? purchasedProjects.filter((p) => p.title.toLowerCase().includes(atQuery.toLowerCase())) : purchasedProjects)
     : [];
+  const safePickerIdx = pickerProjects.length > 0 ? Math.min(pickerIdx, pickerProjects.length - 1) : 0;
 
   const selectProject = useCallback((p: PurchasedProject) => {
     setContextProject(p);
-    // Strip the @query from input
-    setInput((prev) => {
-      const atIdx = prev.lastIndexOf("@");
-      return atIdx >= 0 ? prev.slice(0, atIdx) : prev;
-    });
+    setInput((prev) => prev.slice(0, atStart));
     setAtQuery(null);
     setPickerIdx(0);
     setTimeout(() => inputRef.current?.focus(), 0);
-  }, []);
+  }, [atStart]);
 
   const clearContext = () => {
     setContextProject(null);
@@ -275,12 +266,13 @@ function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedPro
     const val = e.target.value;
     setInput(val);
 
-    // Detect @ trigger: find the last @ that is either at start or preceded by whitespace
     const cursor = e.target.selectionStart ?? val.length;
     const textUpToCursor = val.slice(0, cursor);
     const atMatch = textUpToCursor.match(/(?:^|\s)@([^\s]*)$/);
     if (atMatch) {
-      setAtQuery(atMatch[1]); // could be empty string
+      const query = atMatch[1];
+      setAtQuery(query);
+      setAtStart(textUpToCursor.lastIndexOf("@"));
       setPickerIdx(0);
     } else {
       setAtQuery(null);
@@ -301,7 +293,7 @@ function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedPro
       }
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        selectProject(pickerProjects[pickerIdx]);
+        selectProject(pickerProjects[safePickerIdx]);
         return;
       }
       if (e.key === "Escape") {
@@ -465,8 +457,7 @@ function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedPro
           {pickerOpen && (
             <ProjectPicker
               projects={purchasedProjects}
-              query={atQuery ?? ""}
-              activeIdx={pickerIdx}
+              activeIdx={safePickerIdx}
               accent={accent}
               onSelect={selectProject}
             />
