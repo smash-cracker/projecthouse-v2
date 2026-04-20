@@ -48,7 +48,7 @@ const EMPTY_FORM = {
   desc: "", files: "", pages: "", youtubeLink: "",
 };
 
-type Project = { id: string; title: string; cat: string; price: number; level: string; color: string; created_at: string };
+type Project = { id: string; title: string; tag: string; cat: string; price: number; level: string; color: string; stack: string[]; rating: number; downloads: number; description: string; files: number; pages: number; includes: {name:string;price:number}[]; youtube_link: string | null; created_at: string };
 
 function templateToItems(names: string[]): IncludeItem[] {
   return names.map((name) => ({ name, price: "0" }));
@@ -97,8 +97,9 @@ export default function AdminPage() {
   const [templates, setTemplates] = useState<Record<string, string[]>>(DEFAULT_TEMPLATES);
   const [savingTemplates, setSavingTemplates] = useState(false);
 
-  // Add project dialog
+  // Add / edit project dialogs
   const [addProjectOpen, setAddProjectOpen] = useState(false);
+  const [editProject, setEditProject] = useState<Project | null>(null);
 
   // Viva state
   const [vivaRows, setVivaRows] = useState<QA[]>([]);
@@ -131,7 +132,7 @@ export default function AdminPage() {
   async function fetchProjects() {
     const { data } = await supabase
       .from("projects")
-      .select("id, title, cat, price, level, color, created_at")
+      .select("*")
       .order("created_at", { ascending: false });
     if (data) setProjects(data);
   }
@@ -191,6 +192,52 @@ export default function AdminPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleUpdate(e: React.SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editProject) return;
+    if (includeItems.some((i) => !i.name.trim())) {
+      showToast("❌ All include items need a name", false); return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        cat: form.cat, title: form.title, tag: form.tag,
+        price: parseInt(form.price), level: form.level,
+        stack: form.stack.split(",").map((s) => s.trim()).filter(Boolean),
+        rating: parseFloat(form.rating),
+        downloads: parseInt(form.downloads) || 0,
+        color: form.color, description: form.desc,
+        files: parseInt(form.files) || 0, pages: parseInt(form.pages) || 0,
+        includes: includeItems.map((i) => ({ name: i.name.trim(), price: parseInt(i.price) || 0 })),
+        youtube_link: form.youtubeLink || null,
+      };
+      const { error } = await supabase.from("projects").update(payload).eq("id", editProject.id);
+      if (error) throw error;
+      showToast("✅ Project updated!");
+      setEditProject(null);
+      setForm(EMPTY_FORM);
+      setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? []));
+      fetchProjects();
+    } catch (err: any) {
+      showToast("❌ " + (err.message ?? "Something went wrong"), false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function openEdit(p: Project) {
+    setForm({
+      id: p.id, cat: p.cat, title: p.title, tag: p.tag,
+      price: String(p.price), level: p.level, stack: p.stack.join(", "),
+      rating: String(p.rating), downloads: String(p.downloads),
+      color: p.color, desc: p.description,
+      files: String(p.files), pages: String(p.pages),
+      youtubeLink: p.youtube_link ?? "",
+    });
+    setIncludeItems(p.includes.map(i => ({ name: i.name, price: String(i.price) })));
+    setEditProject(p);
   }
 
   async function handleDelete(id: string) {
@@ -435,6 +482,98 @@ export default function AdminPage() {
     </div>
   );
 
+  const EditProjectDialog = editProject && (
+    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "var(--paper)", display: "flex", flexDirection: "column" }}>
+      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 28px", height: 61, display: "flex", alignItems: "center", gap: 12, flexShrink: 0, background: "var(--card)" }}>
+        <button onClick={() => { setEditProject(null); setForm(EMPTY_FORM); setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? [])); }} style={{ ...iconBtn, width: 34, height: 34 }}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+        </button>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>Edit Project <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 400, marginLeft: 6 }}>{editProject.id}</span></div>
+      </div>
+      <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: "36px 32px", maxWidth: 780, width: "100%", margin: "0 auto" }}>
+        <form onSubmit={handleUpdate} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div><label style={labelStyle}>Title *</label><input required style={inputStyle} value={form.title} onChange={e => field("title", e.target.value)} /></div>
+            <div><label style={labelStyle}>ID</label><input style={{ ...inputStyle, opacity: 0.5 }} value={form.id} readOnly /></div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div><label style={labelStyle}>Category *</label>
+              <select required style={inputStyle} value={form.cat} onChange={e => handleCategoryChange(e.target.value)}>
+                {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+            </div>
+            <div><label style={labelStyle}>Level *</label>
+              <select required style={inputStyle} value={form.level} onChange={e => field("level", e.target.value)}>
+                {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div><label style={labelStyle}>Tag / Subtitle *</label><input required style={inputStyle} value={form.tag} onChange={e => field("tag", e.target.value)} /></div>
+            <div><label style={labelStyle}>Price (₹) *</label><input required type="number" style={inputStyle} value={form.price} onChange={e => field("price", e.target.value)} /></div>
+          </div>
+          <div><label style={labelStyle}>Description *</label><textarea required rows={3} style={{ ...inputStyle, resize: "vertical" }} value={form.desc} onChange={e => field("desc", e.target.value)} /></div>
+          <div><label style={labelStyle}>Tech Stack (comma-separated) *</label><input required style={inputStyle} value={form.stack} onChange={e => field("stack", e.target.value)} /></div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>What's Included *</label>
+              <span style={{ fontSize: 11, color: "var(--muted)" }}>₹0 = bundled</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 110px 30px", gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, paddingLeft: 2 }}>Item</span>
+              <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, paddingLeft: 2 }}>Price (₹)</span>
+              <span />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {includeItems.map((item, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 110px 30px", gap: 8 }}>
+                  <input style={{ ...inputStyle, fontSize: 13 }} value={item.name} onChange={e => setItem(i, { name: e.target.value })} />
+                  <input type="number" min="0" style={{ ...inputStyle, fontSize: 13 }} value={item.price} onChange={e => setItem(i, { price: e.target.value })} />
+                  <button type="button" onClick={() => setIncludeItems(p => p.filter((_, idx) => idx !== i))} style={iconBtn}>
+                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={() => setIncludeItems(p => [...p, { name: "", price: "0" }])}
+              style={{ marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px dashed var(--line)", background: "transparent", color: "var(--muted)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>
+              + Add item
+            </button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+            {[["files","Files"],["pages","Pages"],["rating","Rating"],["downloads","Downloads"]].map(([k, lbl]) => (
+              <div key={k}><label style={labelStyle}>{lbl}</label>
+                <input type="number" step={k === "rating" ? "0.1" : "1"} min="0" max={k === "rating" ? "5" : undefined}
+                  style={inputStyle} value={(form as any)[k]} onChange={e => field(k as any, e.target.value)} />
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div><label style={labelStyle}>Card Color</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {COLORS.map(c => (
+                  <button key={c.value} type="button" title={c.label} onClick={() => field("color", c.value)}
+                    style={{ width: 28, height: 28, borderRadius: 8, background: c.value, border: form.color === c.value ? "2px solid var(--ink)" : "2px solid transparent", cursor: "pointer" }} />
+                ))}
+              </div>
+            </div>
+            <div><label style={labelStyle}>YouTube Link</label><input style={inputStyle} value={form.youtubeLink} onChange={e => field("youtubeLink", e.target.value)} placeholder="https://youtu.be/..." /></div>
+          </div>
+          <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
+            <button type="submit" disabled={saving}
+              style={{ padding: "14px 28px", borderRadius: 12, border: "none", background: saving ? "var(--muted)" : accent, color: "var(--accent-ink)", fontSize: 15, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+            <button type="button" onClick={() => { setEditProject(null); setForm(EMPTY_FORM); setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? [])); }}
+              style={{ padding: "14px 20px", borderRadius: 12, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
   const ProjectsSection = (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
@@ -465,8 +604,11 @@ export default function AdminPage() {
                   {CATEGORIES.find(c => c.id === p.cat)?.label} · ₹{p.price.toLocaleString("en-IN")} · {p.level}
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
                 <span className="mono" style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "var(--paper-2)", color: "var(--muted)" }}>{p.id}</span>
+                <button onClick={() => openEdit(p)} style={{ ...iconBtn, color: accent, borderColor: accent }} title="Edit">
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>
+                </button>
                 <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} style={iconBtn} title="Delete">
                   {deleting === p.id ? "…" : <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>}
                 </button>
@@ -688,6 +830,7 @@ export default function AdminPage() {
       </div>
 
       {AddProjectDialog}
+      {EditProjectDialog}
     </div>
   );
 }
