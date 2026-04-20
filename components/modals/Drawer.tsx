@@ -401,7 +401,7 @@ const Stat = ({ n, l }: { n: number | string; l: string }) => (
 );
 
 export function Drawer() {
-  const { openedProject: project, setOpenedProject, accent } = useProjectHouse();
+  const { openedProject: project, setOpenedProject, accent, purchasedProjectIds, refreshPurchases } = useProjectHouse();
   const [tab, setTab] = useState("overview");
   const [demoOpen, setDemoOpen] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<{ paymentId: string; amount: number } | null>(null);
@@ -437,6 +437,7 @@ export function Drawer() {
 
   if (!project) return null;
   const p = project;
+  const alreadyPurchased = purchasedProjectIds.includes((p as any).id);
   const cat = CATEGORIES.find((c) => c.id === p.cat);
 
   return (
@@ -665,18 +666,30 @@ export function Drawer() {
               </svg>
               {p.cat === "mob" ? "Get demo APK" : "Book 1-hour demo"}
             </button>
-            <RazorpayButton
-              amount={(customTotal || (p as any).price) * 100}
-              name="Project House"
-              description={(p as any).title}
-              onSuccess={(paymentId) => {
-                setPaymentSuccess({ paymentId, amount: (customTotal || (p as any).price) * 100 });
-              }}
-              onFailure={(err) => setPaymentFailure({ description: (err as any)?.description })}
-              style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center" }}
-            >
-              Get this project <ArrowUpRight />
-            </RazorpayButton>
+            {alreadyPurchased ? (
+              <a
+                href="/my-projects"
+                style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center", textDecoration: "none" }}
+              >
+                View in My Projects <ArrowUpRight />
+              </a>
+            ) : (
+              <RazorpayButton
+                amount={(customTotal || (p as any).price) * 100}
+                name="Project House"
+                description={(p as any).title}
+                projectId={(p as any).id}
+                projectTitle={(p as any).title}
+                onSuccess={(paymentId) => {
+                  refreshPurchases();
+                  setPaymentSuccess({ paymentId, amount: (customTotal || (p as any).price) * 100 });
+                }}
+                onFailure={(err) => setPaymentFailure({ description: (err as any)?.description })}
+                style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center" }}
+              >
+                Get this project <ArrowUpRight />
+              </RazorpayButton>
+            )}
           </div>
         </div>
       </aside>

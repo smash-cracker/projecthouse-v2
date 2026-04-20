@@ -15,6 +15,8 @@ interface RazorpayButtonProps {
   currency?: string;
   name: string;
   description?: string;
+  projectId?: string;
+  projectTitle?: string;
   /** Customer details for prefill */
   prefill?: { name?: string; email?: string; contact?: string };
   /** Called with verified payment_id on success */
@@ -30,6 +32,8 @@ export default function RazorpayButton({
   currency = "INR",
   name,
   description,
+  projectId,
+  projectTitle,
   prefill,
   onSuccess,
   onFailure,
@@ -79,7 +83,12 @@ export default function RazorpayButton({
           const verifyRes = await fetch("/api/razorpay/verify-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(response),
+            body: JSON.stringify({
+              ...response,
+              project_id: projectId,
+              project_title: projectTitle,
+              amount,
+            }),
           });
           const verifyData = await verifyRes.json();
           if (verifyData.verified) {

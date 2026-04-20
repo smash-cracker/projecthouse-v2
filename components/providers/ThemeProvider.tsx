@@ -34,6 +34,8 @@ interface ProjectHouseState {
   vivaOpen: boolean;
   setVivaOpen: React.Dispatch<React.SetStateAction<boolean>>;
   signOut: () => void;
+  purchasedProjectIds: string[];
+  refreshPurchases: () => void;
 }
 
 const ProjectHouseContext = createContext<ProjectHouseState | undefined>(undefined);
@@ -58,7 +60,6 @@ function supabaseUserToUser(sbUser: any): User | null {
   };
 }
 
-// Helper: read a cookie by name on the client
 function getClientCookie(name: string): string | undefined {
   if (typeof document === "undefined") return undefined;
   return document.cookie
@@ -78,8 +79,8 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
   const [user, setUser] = useState<User | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [vivaOpen, setVivaOpen] = useState(false);
+  const [purchasedProjectIds, setPurchasedProjectIds] = useState<string[]>([]);
 
-  // Sync from cookie on first client render (handles cases where cookie wasn't passed from server)
   useEffect(() => {
     const saved = getClientCookie("ph-theme");
     if (saved) setDark(saved === "dark");
@@ -91,30 +92,40 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
       .then(({ data }) => { setProjects(data ?? []); setProjectsLoading(false); });
   }, []);
 
+  const fetchPurchases = async () => {
+    const supabase = createClient();
+    const { data } = await supabase.from("payments").select("project_id");
+    setPurchasedProjectIds((data ?? []).map((r: any) => r.project_id).filter(Boolean));
+  };
+
   useEffect(() => {
     const supabase = createClient();
 
     supabase.auth.getUser().then(({ data: { user: sbUser } }) => {
       setUser(supabaseUserToUser(sbUser));
+      if (sbUser) fetchPurchases();
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(supabaseUserToUser(session?.user ?? null));
+      if (session?.user) {
+        fetchPurchases();
+      } else {
+        setPurchasedProjectIds([]);
+      }
     });
 
     return () => subscription.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
-    // 1-year cookie, readable by the Next.js server on every request
     document.cookie = `ph-theme=${dark ? "dark" : "light"}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
   }, [dark]);
 
   useEffect(() => {
-    // accent -> CSS var
     document.documentElement.style.setProperty("--accent", accent);
-    // compute contrast ink for accent (simple luminance)
     const hex = accent.replace("#", "");
     const r = parseInt(hex.slice(0, 2), 16) || 0,
       g = parseInt(hex.slice(2, 4), 16) || 0,
@@ -126,7 +137,6 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
     );
   }, [accent]);
 
-  // ⌘K Support
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -172,6 +182,8 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
         vivaOpen,
         setVivaOpen,
         signOut,
+        purchasedProjectIds,
+        refreshPurchases: fetchPurchases,
       }}
     >
       {children}
