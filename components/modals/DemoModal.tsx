@@ -362,7 +362,6 @@ export function DemoModal({ project, onClose, accent }: { project: any; onClose:
             >
               2 · Pick a 1-hour slot{" "}
               <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--muted)", opacity: 0.7 }}>· IST</span>
-              {loadingSlots && <span style={{ opacity: 0.5, marginLeft: 8 }}>loading…</span>}
             </div>
             {dayOff ? (
               <div
@@ -373,6 +372,32 @@ export function DemoModal({ project, onClose, accent }: { project: any; onClose:
               >
                 We don&apos;t host demos on Sundays. Pick another day.
               </div>
+            ) : loadingSlots ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      height: 46, borderRadius: 10, border: "1px solid var(--line)",
+                      background: "var(--card)",
+                      overflow: "hidden", position: "relative",
+                    }}
+                  >
+                    <div style={{
+                      position: "absolute", inset: 0,
+                      background: "linear-gradient(90deg, transparent 0%, var(--line) 50%, transparent 100%)",
+                      backgroundSize: "200% 100%",
+                      animation: "skeletonSlide 1.4s ease-in-out infinite",
+                    }} />
+                  </div>
+                ))}
+                <style>{`
+                  @keyframes skeletonSlide {
+                    0%   { background-position: -200% 0; }
+                    100% { background-position:  200% 0; }
+                  }
+                `}</style>
+              </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)", gap: 8 }}>
                 {slots.map((s) => {
@@ -382,7 +407,7 @@ export function DemoModal({ project, onClose, accent }: { project: any; onClose:
                     <button
                       key={s}
                       onClick={() => !booked && setSlot(s)}
-                      disabled={booked || loadingSlots}
+                      disabled={booked}
                       style={{
                         padding: "12px", borderRadius: 10,
                         cursor: booked ? "not-allowed" : "pointer",
