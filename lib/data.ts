@@ -18,24 +18,6 @@ export const TWEAK_DEFAULTS = {
   "accent": "#FF8A5C"
 };
 
-export const ADD_ONS = [
-  { id: 'src',     label: 'Source Code',          desc: 'Complete, runnable codebase',         price: 599,  icon: '💻', required: true  },
-  { id: 'report',  label: 'Project Report',       desc: 'Thesis-ready PDF (50–80 pages)',       price: 299,  icon: '📄', required: false },
-  { id: 'slides',  label: 'Presentation Slides',  desc: 'PPT/PPTX viva deck (20–30 slides)',   price: 149,  icon: '🖼️', required: false },
-  { id: 'data',    label: 'Dataset',              desc: 'Cleaned, labelled, ready to train',   price: 199,  icon: '🗄️', required: false },
-  { id: 'nb',      label: 'Notebooks',            desc: 'Step-by-step Jupyter walkthroughs',   price: 149,  icon: '📓', required: false },
-  { id: 'deploy',  label: 'Deployment Guide',     desc: 'Docker / Vercel / Render setup',      price: 99,   icon: '🚀', required: false },
-  { id: 'papers',  label: 'Reference Papers',     desc: 'Curated IEEE/ACM PDFs with notes',    price: 99,   icon: '📚', required: false },
-  { id: 'viva',    label: 'Viva Q&A Guide',       desc: 'Project-specific panel questions',    price: 149,  icon: '🎓', required: false },
-  { id: 'support', label: '1-Month Support',      desc: 'WhatsApp Q&A with the author',        price: 299,  icon: '💬', required: false },
-];
-
-export const ADD_ONS_INIT: Record<string, boolean> = ADD_ONS.reduce(
-  (a, i) => ({ ...a, [i.id]: i.required }),
-  {}
-);
-
-export const ADD_ONS_FULL = ADD_ONS.reduce((s, i) => s + i.price, 0);
 
 export const VIVA_TABS = [
   { id: 'ml',  label: 'Machine Learning', icon: '🤖' },

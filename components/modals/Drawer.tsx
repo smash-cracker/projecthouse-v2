@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
-import { CATEGORIES, ADD_ONS, ADD_ONS_INIT, ADD_ONS_FULL } from "@/lib/data";
+import { CATEGORIES } from "@/lib/data";
 import { ArrowUpRight, Star } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
@@ -401,20 +401,19 @@ export function Drawer() {
   const { openedProject: project, setOpenedProject, accent } = useProjectHouse();
   const [tab, setTab] = useState("overview");
   const [demoOpen, setDemoOpen] = useState(false);
-  const [sel, setSel] = useState<Record<string, boolean>>(ADD_ONS_INIT);
+  const [sel, setSel] = useState<Record<number, boolean>>({});
   const isMobile = useIsMobile();
 
-  const toggleAddon = (id: string) => {
-    if (ADD_ONS.find((i) => i.id === id)?.required) return;
-    setSel((s) => ({ ...s, [id]: !s[id] }));
-  };
-  const customTotal = ADD_ONS.reduce((sum, i) => (sel[i.id] ? sum + i.price : sum), 0);
-  const selCount = Object.values(sel).filter(Boolean).length;
+  const p_includes: { name: string; price: number }[] = (project as any)?.includes ?? [];
+  const toggleAddon = (idx: number) => setSel((s) => ({ ...s, [idx]: !s[idx] }));
+  const customTotal = p_includes.reduce((sum, item, idx) => sel[idx] !== false ? sum + item.price : sum, 0);
+  const fullTotal = p_includes.reduce((sum, item) => sum + item.price, 0);
+  const selCount = p_includes.filter((_, idx) => sel[idx] !== false).length;
 
   useEffect(() => {
     if (!project) {
       setDemoOpen(false);
-      setSel(ADD_ONS_INIT);
+      setSel({});
       return;
     }
     const onKey = (e: KeyboardEvent) => {
@@ -628,9 +627,9 @@ export function Drawer() {
               <div className="mono" style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".12em" }}>
                 Your total
               </div>
-              {customTotal !== ADD_ONS_FULL && (
+              {customTotal !== fullTotal && (
                 <span style={{ fontSize: 11, color: "var(--muted)", textDecoration: "line-through" }}>
-                  ₹{ADD_ONS_FULL.toLocaleString("en-IN")}
+                  ₹{fullTotal.toLocaleString("en-IN")}
                 </span>
               )}
             </div>
