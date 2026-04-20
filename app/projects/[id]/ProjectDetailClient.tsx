@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { CATEGORIES } from "@/lib/data";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const TABS = [
   { id: "overview",    label: "What you get" },
@@ -19,6 +20,331 @@ const TIMELINE = [
   ["Day 6",   "Deploy demo, record walkthrough"],
   ["Day 7",   "Viva prep — we answer your questions"],
 ];
+
+// ——— Ask AI sub-components ———————————————————————————————————
+
+type Message = { role: "user" | "assistant"; content: string };
+
+const AI_SUGGESTIONS = [
+  "Explain the methodology used in this project",
+  "What viva questions should I prepare for?",
+  "How does the main algorithm work?",
+  "What are the key results and how do I defend them?",
+  "How can I extend this project further?",
+];
+
+function BotText({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <>
+      {lines.map((line, li) => {
+        const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+        return (
+          <React.Fragment key={li}>
+            {parts.map((part, pi) => {
+              if (part.startsWith("**") && part.endsWith("**"))
+                return <strong key={pi}>{part.slice(2, -2)}</strong>;
+              if (part.startsWith("`") && part.endsWith("`"))
+                return (
+                  <code key={pi} style={{
+                    fontFamily: "JetBrains Mono, monospace", fontSize: "0.88em",
+                    background: "var(--paper)", borderRadius: 4, padding: "1px 5px",
+                  }}>{part.slice(1, -1)}</code>
+                );
+              return <React.Fragment key={pi}>{part}</React.Fragment>;
+            })}
+            {li < lines.length - 1 && <br />}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+}
+
+const BotAvatar = ({ accent }: { accent: string }) => (
+  <div style={{
+    width: 32, height: 32, borderRadius: 10, background: accent,
+    display: "grid", placeItems: "center", flexShrink: 0,
+  }}>
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+      <rect x="3" y="6" width="14" height="10" rx="3" fill="#fff" opacity=".2" stroke="#fff" strokeWidth="1.4"/>
+      <circle cx="7.5" cy="11" r="1.2" fill="#fff"/>
+      <circle cx="12.5" cy="11" r="1.2" fill="#fff"/>
+      <path d="M7 6V4.5a3 3 0 016 0V6" stroke="#fff" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  </div>
+);
+
+const UserAvatar = () => (
+  <div style={{
+    width: 32, height: 32, borderRadius: 10, background: "var(--ink)",
+    display: "grid", placeItems: "center", flexShrink: 0,
+  }}>
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="7" r="3.2" fill="var(--paper)" opacity=".9"/>
+      <path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="var(--paper)" strokeWidth="1.4" strokeLinecap="round" opacity=".9"/>
+    </svg>
+  </div>
+);
+
+const TypingDots = () => (
+  <span style={{ display: "inline-flex", gap: 5, alignItems: "center", padding: "2px 0" }}>
+    {[0, 1, 2].map((i) => (
+      <span key={i} style={{
+        width: 7, height: 7, borderRadius: "50%", background: "var(--muted)",
+        display: "inline-block",
+        animation: `chatDot 1.2s ${i * 0.2}s ease-in-out infinite`,
+      }} />
+    ))}
+  </span>
+);
+
+function ChatPanel({ accent, projectTitle, projectDescription }: { accent: string; projectTitle: string; projectDescription: string }) {
+  const isMobile = useIsMobile();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const send = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || loading) return;
+    const contextPrefix = messages.length === 0
+      ? `[Project: "${projectTitle}" — ${projectDescription}]\n\n`
+      : "";
+    const userMsg: Message = { role: "user", content: contextPrefix + trimmed };
+    const next = [...messages, userMsg];
+    setMessages(next);
+    setInput("");
+    if (inputRef.current) inputRef.current.style.height = "auto";
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: next }),
+      });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantText = "";
+
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      setLoading(false);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        if (chunk.startsWith("__ERROR__:")) {
+          assistantText = "Sorry, I couldn't reach the AI. Please try again shortly.";
+          break;
+        }
+        assistantText += chunk;
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: assistantText };
+          return updated;
+        });
+      }
+
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: "assistant", content: assistantText || "Sorry, I couldn't reach the AI. Please try again shortly." };
+        return updated;
+      });
+    } catch {
+      setLoading(false);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
+    } finally {
+      setLoading(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); }
+  };
+
+  const isEmpty = messages.length === 0;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: 560, border: "1px solid var(--line)", borderRadius: 16, overflow: "hidden" }}>
+      <div
+        className="scroll"
+        style={{
+          flex: 1, overflowY: "auto",
+          padding: isEmpty ? "0" : isMobile ? "16px 12px 8px" : "24px 28px 12px",
+          display: "flex", flexDirection: "column", gap: 24,
+        }}
+      >
+        {isEmpty && (
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center", height: "100%", gap: 20,
+            padding: isMobile ? "20px 16px" : "28px 24px",
+          }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 20, background: accent,
+              display: "grid", placeItems: "center", boxShadow: `0 8px 24px ${accent}55`,
+            }}>
+              <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="6" width="14" height="10" rx="3" fill="#fff" opacity=".2" stroke="#fff" strokeWidth="1.4"/>
+                <circle cx="7.5" cy="11" r="1.4" fill="#fff"/>
+                <circle cx="12.5" cy="11" r="1.4" fill="#fff"/>
+                <path d="M7 6V4.5a3 3 0 016 0V6" stroke="#fff" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-.01em" }}>Project Bot</div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6, lineHeight: 1.6, maxWidth: 320 }}>
+                Ask me anything about this project — methodology, results, or how to handle tough viva questions.
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: isMobile ? "100%" : 400 }}>
+              <div className="mono" style={{ fontSize: 10, color: "var(--muted)", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 2 }}>
+                Try asking
+              </div>
+              {AI_SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => send(s)}
+                  style={{
+                    padding: "11px 16px", borderRadius: 10,
+                    border: "1px solid var(--line)", background: "var(--card)",
+                    color: "var(--ink)", fontFamily: "inherit", fontSize: 13,
+                    cursor: "pointer", textAlign: "left", display: "flex",
+                    alignItems: "center", justifyContent: "space-between", gap: 8,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
+                >
+                  {s}
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, color: "var(--muted)" }}>
+                    <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {messages.map((msg, i) => {
+          const isUser = msg.role === "user";
+          const displayContent = isUser
+            ? msg.content.replace(/^\[Project:[^\]]+\]\n\n/, "")
+            : msg.content;
+          const isStreaming = !isUser && i === messages.length - 1 && msg.content === "" && loading;
+          return (
+            <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: isUser ? "row-reverse" : "row" }}>
+              {isUser ? <UserAvatar /> : <BotAvatar accent={accent} />}
+              <div style={{ maxWidth: isMobile ? "88%" : "75%", display: "flex", flexDirection: "column", gap: 4, alignItems: isUser ? "flex-end" : "flex-start" }}>
+                <div className="mono" style={{ fontSize: 10, color: "var(--muted)", letterSpacing: ".08em", textTransform: "uppercase", paddingInline: 4 }}>
+                  {isUser ? "You" : "Project Bot"}
+                </div>
+                <div style={{
+                  padding: "13px 17px",
+                  borderRadius: isUser ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
+                  background: isUser ? "var(--ink)" : "var(--card)",
+                  color: isUser ? "var(--paper)" : "var(--ink)",
+                  border: isUser ? "none" : "1px solid var(--line)",
+                  fontSize: 14, lineHeight: 1.7,
+                  boxShadow: isUser ? "0 2px 8px rgba(0,0,0,.12)" : "0 1px 4px rgba(0,0,0,.06)",
+                }}>
+                  {isStreaming
+                    ? <TypingDots />
+                    : isUser
+                      ? <span style={{ whiteSpace: "pre-wrap" }}>{displayContent}</span>
+                      : <BotText text={displayContent} />
+                  }
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {loading && messages[messages.length - 1]?.role === "user" && (
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <BotAvatar accent={accent} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div className="mono" style={{ fontSize: 10, color: "var(--muted)", letterSpacing: ".08em", textTransform: "uppercase", paddingInline: 4 }}>Project Bot</div>
+              <div style={{ padding: "13px 17px", borderRadius: "4px 16px 16px 16px", background: "var(--card)", border: "1px solid var(--line)", boxShadow: "0 1px 4px rgba(0,0,0,.06)" }}>
+                <TypingDots />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      <div style={{ borderTop: "1px solid var(--line)", padding: isMobile ? "10px 12px" : "14px 20px", background: "var(--paper)" }}>
+        <div style={{
+          display: "flex", gap: 10, alignItems: "flex-end",
+          background: "var(--card)", border: "1px solid var(--line)",
+          borderRadius: 14, padding: "8px 8px 8px 16px",
+        }}>
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Ask about your project or viva prep…"
+            rows={1}
+            style={{
+              flex: 1, resize: "none", border: "none", outline: "none",
+              background: "transparent", color: "var(--ink)",
+              fontSize: 14, fontFamily: "inherit", lineHeight: 1.55,
+              maxHeight: 120, overflowY: "auto", padding: "4px 0",
+            }}
+            onInput={(e) => {
+              const el = e.currentTarget;
+              el.style.height = "auto";
+              el.style.height = Math.min(el.scrollHeight, 120) + "px";
+            }}
+          />
+          <button
+            onClick={() => send(input)}
+            disabled={!input.trim() || loading}
+            style={{
+              width: 36, height: 36, borderRadius: 9, border: "none", flexShrink: 0,
+              background: input.trim() && !loading ? accent : "var(--line)",
+              color: input.trim() && !loading ? "#fff" : "var(--muted)",
+              cursor: input.trim() && !loading ? "pointer" : "default",
+              display: "grid", placeItems: "center",
+              transition: "background .15s, color .15s",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        {!isMobile && (
+          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7, paddingInline: 4 }}>
+            Enter to send · Shift+Enter for new line
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes chatDot {
+          0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+          40% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
+}
 
 function Pill({ children, color }: { children: React.ReactNode; color?: string }) {
   return (
@@ -127,50 +453,9 @@ export default function ProjectDetailClient({
   payment: { id: string; created_at: string; amount: number; razorpay_payment_id: string };
 }) {
   const [tab, setTab] = useState("overview");
-  const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
-  const chatBottomRef = useRef<HTMLDivElement>(null);
   const cat = CATEGORIES.find((c) => c.id === p.cat);
   const ab = p.abstract || { objective: p.description, methodology: "", results: "", keywords: p.stack?.join(", ") ?? "" };
   const paidDate = new Date(payment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
-
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
-
-  async function sendChat() {
-    const text = chatInput.trim();
-    if (!text || chatLoading) return;
-    const contextPrefix = chatMessages.length === 0
-      ? `[Project context: "${p.title}" — ${p.description}]\n\n`
-      : "";
-    const userMsg = { role: "user" as const, content: contextPrefix + text };
-    const next = [...chatMessages, userMsg];
-    setChatMessages(next);
-    setChatInput("");
-    setChatLoading(true);
-    const placeholder = { role: "assistant" as const, content: "" };
-    setChatMessages([...next, placeholder]);
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
-      });
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-      let full = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        full += decoder.decode(value, { stream: true });
-        setChatMessages([...next, { role: "assistant", content: full }]);
-      }
-    } finally {
-      setChatLoading(false);
-    }
-  }
 
   const extractYouTubeID = (url?: string) => {
     if (!url) return null;
@@ -470,73 +755,11 @@ export default function ProjectDetailClient({
 
           {/* Ask AI */}
           {tab === "ask-ai" && (
-            <div style={{ display: "flex", flexDirection: "column", height: 520 }}>
-              <div style={{
-                flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12,
-                padding: "4px 0 16px",
-              }}>
-                {chatMessages.length === 0 && (
-                  <div style={{
-                    flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                    gap: 12, color: "var(--muted)", textAlign: "center", padding: "40px 24px",
-                  }}>
-                    <div style={{ fontSize: 32 }}>✦</div>
-                    <div style={{ fontSize: 15, fontWeight: 500, color: "var(--ink)" }}>Ask anything about this project</div>
-                    <div style={{ fontSize: 13, maxWidth: 360, lineHeight: 1.6 }}>
-                      Get help understanding the code, methodology, viva questions, or how to extend the project.
-                    </div>
-                  </div>
-                )}
-                {chatMessages.map((m, i) => (
-                  <div key={i} style={{
-                    display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start",
-                  }}>
-                    <div style={{
-                      maxWidth: "78%", padding: "12px 16px", borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                      background: m.role === "user" ? (p.color ?? "var(--ink)") : "var(--card)",
-                      color: m.role === "user" ? "#fff" : "var(--ink)",
-                      border: m.role === "user" ? "none" : "1px solid var(--line)",
-                      fontSize: 14, lineHeight: 1.65, whiteSpace: "pre-wrap",
-                    }}>
-                      {m.role === "user"
-                        ? m.content.replace(/^\[Project context:[^\]]+\]\n\n/, "")
-                        : m.content || <span style={{ opacity: 0.4 }}>▌</span>}
-                    </div>
-                  </div>
-                ))}
-                <div ref={chatBottomRef} />
-              </div>
-              <div style={{
-                display: "flex", gap: 10, borderTop: "1px solid var(--line)", paddingTop: 16,
-              }}>
-                <input
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendChat()}
-                  placeholder="Ask about the code, methodology, viva prep…"
-                  disabled={chatLoading}
-                  style={{
-                    flex: 1, padding: "12px 16px", borderRadius: 999,
-                    border: "1px solid var(--line)", background: "var(--card)",
-                    color: "var(--ink)", fontFamily: "inherit", fontSize: 14,
-                    outline: "none",
-                  }}
-                />
-                <button
-                  onClick={sendChat}
-                  disabled={!chatInput.trim() || chatLoading}
-                  style={{
-                    padding: "12px 20px", borderRadius: 999, border: "none",
-                    background: p.color ?? "var(--ink)", color: "#fff",
-                    fontFamily: "inherit", fontSize: 14, fontWeight: 600,
-                    cursor: chatInput.trim() && !chatLoading ? "pointer" : "not-allowed",
-                    opacity: chatInput.trim() && !chatLoading ? 1 : 0.5,
-                  }}
-                >
-                  {chatLoading ? "…" : "Send"}
-                </button>
-              </div>
-            </div>
+            <ChatPanel
+              accent={p.color ?? "#2A2FB8"}
+              projectTitle={p.title}
+              projectDescription={p.description}
+            />
           )}
 
         </div>
