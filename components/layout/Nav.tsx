@@ -212,7 +212,7 @@ export function Nav() {
                           </div>
                         </div>
                         {user.isAdmin && (
-                          <a href="/admin" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13, color: accent, textDecoration: "none", fontWeight: 600 }}>
+                          <a href="/admin" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
                             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/><rect x="8" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/><rect x="1" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/><rect x="8" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/></svg>
                             Admin Dashboard
                           </a>
@@ -332,7 +332,7 @@ export function Nav() {
                       style={{
                         display: "flex", alignItems: "center", gap: 8,
                         padding: "10px 4px", borderBottom: "1px solid var(--line)",
-                        textDecoration: "none", color: accent, fontSize: 14, fontWeight: 600,
+                        textDecoration: "none", color: "var(--ink)", fontSize: 14,
                       }}
                     >
                       Admin Dashboard

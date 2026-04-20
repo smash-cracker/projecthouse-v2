@@ -23,6 +23,7 @@ const COLORS = [
   { label: "Indigo", value: "#2A2FB8" },
   { label: "Deep Navy", value: "#0A0F2C" },
   { label: "Dark Indigo", value: "#1A1F7A" },
+  { label: "Peach", value: "#FF8A5C" },
   { label: "Steel Blue", value: "#1E3A5F" },
   { label: "Forest", value: "#1A4731" },
   { label: "Crimson", value: "#7B1D1D" },
