@@ -215,7 +215,7 @@ export default function AdminPage() {
       };
       const { error } = await supabase.from("projects").insert(payload);
       if (error) throw error;
-      showToast("✅ Project added!");
+      showToast(" Project added!");
       setForm(EMPTY_FORM);
       setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? []));
       fetchProjects();
@@ -247,7 +247,7 @@ export default function AdminPage() {
       };
       const { error } = await supabase.from("projects").update(payload).eq("id", editProject.id);
       if (error) throw error;
-      showToast("✅ Project updated!");
+      showToast(" Project updated!");
       setEditProject(null);
       setForm(EMPTY_FORM);
       setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? []));
@@ -318,7 +318,7 @@ export default function AdminPage() {
       };
       const { error } = await supabase.from("bundles").insert(payload);
       if (error) throw error;
-      showToast("✅ Bundle added!");
+      showToast(" Bundle added!");
       resetBundleForm();
       setAddBundleOpen(false);
       fetchBundles();
@@ -343,7 +343,7 @@ export default function AdminPage() {
       };
       const { error } = await supabase.from("bundles").update(payload).eq("id", editBundle.id);
       if (error) throw error;
-      showToast("✅ Bundle updated!");
+      showToast(" Bundle updated!");
       setEditBundle(null);
       resetBundleForm();
       fetchBundles();
@@ -373,7 +373,7 @@ export default function AdminPage() {
     setSavingTemplates(true);
     try {
       localStorage.setItem("admin_cat_templates", JSON.stringify(templates));
-      showToast("✅ Templates saved!");
+      showToast(" Templates saved!");
     } catch { showToast("❌ Failed to save", false); }
     finally { setSavingTemplates(false); }
   }
@@ -437,7 +437,7 @@ export default function AdminPage() {
     if (error) { showToast("❌ " + error.message, false); return; }
     setAddForm({ question: "", answer: "" });
     setAddingNew(false);
-    showToast("✅ Question added!");
+    showToast(" Question added!");
     fetchViva();
   }
 

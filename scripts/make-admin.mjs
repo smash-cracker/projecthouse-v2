@@ -49,6 +49,6 @@ if (error) {
   process.exit(1);
 }
 
-console.log("✅  Admin role granted to:", data.user.email);
+console.log("  Admin role granted to:", data.user.email);
 console.log("    app_metadata:", data.user.app_metadata);
 console.log("\n💡  Sign out and back in for the JWT to update.");
