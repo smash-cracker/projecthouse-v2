@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { CATEGORIES } from "@/lib/data";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useProjectHouse } from "@/components/providers/ThemeProvider";
 
 const TABS = [
   { id: "overview",    label: "What you get" },
@@ -452,6 +453,8 @@ export default function ProjectDetailClient({
   project: any;
   payment: { id: string; created_at: string; amount: number; razorpay_payment_id: string };
 }) {
+  const { accent } = useProjectHouse();
+  const isMobile = useIsMobile();
   const [tab, setTab] = useState("overview");
   const cat = CATEGORIES.find((c) => c.id === p.cat);
   const ab = p.abstract || { objective: p.description, methodology: "", results: "", keywords: p.stack?.join(", ") ?? "" };
@@ -467,29 +470,55 @@ export default function ProjectDetailClient({
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)", color: "var(--ink)" }}>
 
-      {/* Top nav */}
+      {/* Header — matches viva page style */}
       <div style={{
         position: "sticky", top: 0, zIndex: 10,
-        background: "var(--paper)", borderBottom: "1px solid var(--line)",
-        padding: "14px 32px", display: "flex", justifyContent: "space-between", alignItems: "center",
+        background: "var(--card)", borderBottom: "1px solid var(--line)",
+        padding: isMobile ? "0 16px" : "0 28px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        height: 64, flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <a href="/my-projects" style={{ fontSize: 13, color: "var(--muted)", textDecoration: "none" }}>
-            ← My Projects
-          </a>
-          <span style={{ color: "var(--line)" }}>/</span>
-          <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: 500, maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {p.title}
-          </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span
-            className="mono"
-            style={{ fontSize: 11, padding: "4px 10px", borderRadius: 999, background: "#D1FAE5", color: "#065F46", border: "1px solid #6EE7B7", fontWeight: 500 }}
+          <a
+            href="/my-projects"
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              width: 34, height: 34, borderRadius: 9,
+              border: "1px solid var(--line)", background: "var(--paper-2)",
+              textDecoration: "none", color: "var(--ink)", flexShrink: 0,
+            }}
           >
-            Purchased {paidDate}
-          </span>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M9 2L3 7l6 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </a>
+          {!isMobile && (
+            <>
+              <span style={{ color: "var(--line)", fontSize: 18 }}>/</span>
+              <span style={{ fontSize: 13, color: "var(--muted)" }}>My Projects</span>
+              <span style={{ color: "var(--line)", fontSize: 18 }}>/</span>
+              <span style={{ fontSize: 13, fontWeight: 600, maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {p.title}
+              </span>
+            </>
+          )}
+          {isMobile && (
+            <span style={{ fontSize: 13, fontWeight: 600, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {p.title}
+            </span>
+          )}
         </div>
+        <span
+          className="mono"
+          style={{
+            fontSize: 11, padding: "5px 12px", borderRadius: 999,
+            background: accent + "22", color: accent,
+            border: `1px solid ${accent}44`, fontWeight: 600,
+            flexShrink: 0,
+          }}
+        >
+          ✓ Purchased
+        </span>
       </div>
 
       {/* Hero video */}
@@ -504,15 +533,18 @@ export default function ProjectDetailClient({
         </div>
       )}
 
-      {/* Color band if no video */}
+      {/* Color band — taller gradient when no video */}
       {!youtubeID && (
-        <div style={{ height: 8, background: p.color ?? "#2A2FB8" }} />
+        <div style={{
+          height: 6,
+          background: `linear-gradient(90deg, ${p.color ?? "var(--indigo)"}, ${accent})`,
+        }} />
       )}
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px 80px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: isMobile ? "28px 16px 64px" : "40px 24px 80px" }}>
 
         {/* Meta badges */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
           <Pill color={p.color}>{cat?.label ?? p.cat}</Pill>
           <Pill>{p.level}</Pill>
           <Pill>{p.tag}</Pill>
@@ -520,45 +552,56 @@ export default function ProjectDetailClient({
         </div>
 
         {/* Title */}
-        <h1 className="serif" style={{ fontSize: "clamp(32px,5vw,64px)", margin: "0 0 16px", lineHeight: 1.02, letterSpacing: "-.02em" }}>
+        <h1 className="serif" style={{ fontSize: isMobile ? "clamp(28px,8vw,42px)" : "clamp(32px,5vw,64px)", margin: "0 0 14px", lineHeight: 1.02, letterSpacing: "-.02em" }}>
           {p.title}
         </h1>
-        <p style={{ fontSize: 17, color: "var(--muted)", lineHeight: 1.65, margin: "0 0 32px", maxWidth: 680 }}>
+        <p style={{ fontSize: 16, color: "var(--muted)", lineHeight: 1.65, margin: "0 0 32px", maxWidth: 680 }}>
           {p.description}
         </p>
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 40 }}>
-          <Stat n={p.files} l="source files" />
-          <Stat n={p.pages} l="pages, report" />
-          <Stat n={p.stack?.length ?? 0} l="tech in stack" />
+          {[
+            { n: p.files, l: "source files" },
+            { n: p.pages, l: "pages, report" },
+            { n: p.stack?.length ?? 0, l: "tech in stack" },
+          ].map(({ n, l }) => (
+            <div key={l} style={{
+              padding: isMobile ? "14px 16px" : "18px 22px",
+              background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14,
+              borderTop: `3px solid ${accent}`,
+            }}>
+              <div className="serif" style={{ fontSize: isMobile ? 28 : 36, lineHeight: 1, letterSpacing: "-.02em", color: "var(--ink)" }}>{n}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{l}</div>
+            </div>
+          ))}
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--line)", marginBottom: 32, overflowX: "auto" }}>
-          {TABS.map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              style={{
-                padding: "12px 20px", background: "transparent", border: "none",
-                borderBottom: tab === id ? "2px solid var(--ink)" : "2px solid transparent",
-                color: tab === id ? "var(--ink)" : "var(--muted)",
-                cursor: "pointer", fontFamily: "inherit", fontSize: 14, fontWeight: 500,
-                whiteSpace: "nowrap",
-                ...(id === "source" ? {
-                  color: tab === id ? "var(--ink)" : "#10B981",
-                  fontWeight: 600,
-                } : {}),
-                ...(id === "ask-ai" ? {
-                  color: tab === id ? "var(--ink)" : "#8B5CF6",
-                  fontWeight: 600,
-                } : {}),
-              }}
-            >
-              {label}
-            </button>
-          ))}
+        {/* Tabs — pill style like viva mobile strip */}
+        <div style={{
+          display: "flex", gap: 6, marginBottom: 28, overflowX: "auto",
+          padding: "0 0 2px",
+        }}>
+          {TABS.map(({ id, label }) => {
+            const active = tab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                style={{
+                  padding: "8px 16px", borderRadius: 999, flexShrink: 0,
+                  border: active ? "none" : "1px solid var(--line)",
+                  background: active ? accent : "var(--card)",
+                  color: active ? "var(--accent-ink)" : "var(--muted)",
+                  fontFamily: "inherit", fontSize: 13, fontWeight: active ? 600 : 400,
+                  cursor: "pointer",
+                  transition: "background .15s, color .15s",
+                } as React.CSSProperties}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab content */}
@@ -566,23 +609,24 @@ export default function ProjectDetailClient({
 
           {/* Overview */}
           {tab === "overview" && (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
               {(p.includes ?? []).map((item: { name: string; price: number }, i: number) => (
                 <li
                   key={i}
                   style={{
                     display: "flex", alignItems: "center", gap: 12, fontSize: 14,
-                    padding: "14px 16px", background: "var(--card)",
-                    border: "1px solid var(--line)", borderRadius: 10,
+                    padding: "13px 16px", background: "var(--card)",
+                    border: "1px solid var(--line)", borderRadius: 12,
+                    transition: "border-color .15s",
                   }}
                 >
                   <span style={{
                     width: 22, height: 22, borderRadius: "50%",
-                    background: p.color ?? "var(--ink)",
+                    background: accent,
                     display: "grid", placeItems: "center", flexShrink: 0,
                   }}>
                     <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                      <path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M1 4l3 3 5-6" stroke="var(--accent-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
                   <span style={{ flex: 1 }}>{item.name}</span>
@@ -602,8 +646,8 @@ export default function ProjectDetailClient({
                 ["Methodology", ab.methodology],
                 ["Results", ab.results],
               ].filter(([, v]) => v).map(([heading, body]) => (
-                <div key={heading as string}>
-                  <h3 className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", margin: "0 0 10px" }}>
+                <div key={heading as string} style={{ padding: "20px 24px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, borderLeft: `3px solid ${accent}` }}>
+                  <h3 className="mono" style={{ fontSize: 11, color: accent, letterSpacing: ".14em", textTransform: "uppercase", margin: "0 0 10px" }}>
                     {heading}
                   </h3>
                   <p style={{ fontSize: 15, lineHeight: 1.7, margin: 0, color: "var(--ink)" }}>{body}</p>
@@ -634,7 +678,7 @@ export default function ProjectDetailClient({
                       {layer.name}
                     </div>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      {layer.items.map((item: string) => <Pill key={item} color={p.color}>{item}</Pill>)}
+                      {layer.items.map((item: string) => <Pill key={item} color={accent}>{item}</Pill>)}
                     </div>
                   </div>
                 ))
@@ -644,7 +688,7 @@ export default function ProjectDetailClient({
                     Full stack
                   </div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {(p.stack ?? []).map((s: string) => <Pill key={s} color={p.color}>{s}</Pill>)}
+                    {(p.stack ?? []).map((s: string) => <Pill key={s} color={accent}>{s}</Pill>)}
                   </div>
                 </div>
               )}
@@ -659,11 +703,12 @@ export default function ProjectDetailClient({
                 <li key={i} style={{ display: "flex", gap: 18, padding: "12px 0", position: "relative" }}>
                   <div style={{
                     width: 24, height: 24, borderRadius: "50%",
-                    background: i < 2 ? (p.color ?? "var(--ink)") : "var(--card)",
-                    border: "1px solid var(--line)", display: "grid", placeItems: "center",
+                    background: i < 2 ? accent : "var(--card)",
+                    border: `1px solid ${i < 2 ? accent : "var(--line)"}`,
+                    display: "grid", placeItems: "center",
                     flexShrink: 0, zIndex: 1,
                   }}>
-                    <span className="mono" style={{ fontSize: 10, color: i < 2 ? "#fff" : "var(--muted)" }}>{i + 1}</span>
+                    <span className="mono" style={{ fontSize: 10, color: i < 2 ? "var(--accent-ink)" : "var(--muted)" }}>{i + 1}</span>
                   </div>
                   <div>
                     <div className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: ".12em", textTransform: "uppercase" }}>{day}</div>
@@ -676,13 +721,13 @@ export default function ProjectDetailClient({
 
           {/* Source code */}
           {tab === "source" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
               {/* Download CTA */}
               <div style={{
                 padding: "24px 28px", borderRadius: 16,
-                background: (p.color ?? "#2A2FB8") + "12",
-                border: `1px solid ${(p.color ?? "#2A2FB8")}33`,
+                background: accent + "15",
+                border: `1px solid ${accent}33`,
                 display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16,
               }}>
                 <div>
@@ -693,8 +738,8 @@ export default function ProjectDetailClient({
                 </div>
                 <button
                   style={{
-                    padding: "12px 24px", borderRadius: 999, border: "none",
-                    background: p.color ?? "var(--ink)", color: "#fff",
+                    padding: "11px 22px", borderRadius: 999, border: "none",
+                    background: accent, color: "var(--accent-ink)",
                     fontFamily: "inherit", fontSize: 14, fontWeight: 600, cursor: "pointer",
                     display: "inline-flex", alignItems: "center", gap: 8,
                   }}
@@ -714,7 +759,7 @@ export default function ProjectDetailClient({
                 <FileTree project={p} />
               </div>
 
-              {/* Stack versions */}
+              {/* Setup */}
               <div>
                 <h3 className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", margin: "0 0 12px" }}>
                   Setup
@@ -730,21 +775,24 @@ export default function ProjectDetailClient({
               </div>
 
               {/* Payment receipt */}
-              <div style={{ borderTop: "1px solid var(--line)", paddingTop: 24 }}>
-                <h3 className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", margin: "0 0 12px" }}>
+              <div style={{
+                padding: "20px 24px", borderRadius: 14,
+                background: "var(--card)", border: "1px solid var(--line)",
+              }}>
+                <h3 className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", margin: "0 0 14px" }}>
                   Purchase receipt
                 </h3>
-                <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, fontSize: 13 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, fontSize: 13 }}>
                   <div>
-                    <div style={{ color: "var(--muted)", marginBottom: 2 }}>Payment ID</div>
-                    <div className="mono">{payment.razorpay_payment_id}</div>
+                    <div style={{ color: "var(--muted)", marginBottom: 4, fontSize: 11 }}>Payment ID</div>
+                    <div className="mono" style={{ fontSize: 12 }}>{payment.razorpay_payment_id}</div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ color: "var(--muted)", marginBottom: 2 }}>Amount paid</div>
-                    <div style={{ fontWeight: 600 }}>₹{(payment.amount / 100).toLocaleString("en-IN")}</div>
+                  <div>
+                    <div style={{ color: "var(--muted)", marginBottom: 4, fontSize: 11 }}>Amount paid</div>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>₹{(payment.amount / 100).toLocaleString("en-IN")}</div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ color: "var(--muted)", marginBottom: 2 }}>Date</div>
+                  <div>
+                    <div style={{ color: "var(--muted)", marginBottom: 4, fontSize: 11 }}>Date</div>
                     <div>{paidDate}</div>
                   </div>
                 </div>
@@ -756,7 +804,7 @@ export default function ProjectDetailClient({
           {/* Ask AI */}
           {tab === "ask-ai" && (
             <ChatPanel
-              accent={p.color ?? "#2A2FB8"}
+              accent={accent}
               projectTitle={p.title}
               projectDescription={p.description}
             />
