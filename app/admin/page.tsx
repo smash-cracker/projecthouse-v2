@@ -40,7 +40,8 @@ const DEFAULT_TEMPLATES: Record<string, string[]> = {
 
 type IncludeItem = { name: string; price: string };
 type QA = { id: string; cat: string; question: string; answer: string; order_index: number };
-type Section = "projects" | "templates" | "viva";
+type Bundle = { id: string; title: string; description: string; price: number; project_ids: string[]; color: string; created_at: string };
+type Section = "projects" | "templates" | "viva" | "bundles";
 
 const EMPTY_FORM = {
   id: "", cat: "ml", title: "", tag: "", price: "", level: "Intermediate",
@@ -101,6 +102,15 @@ export default function AdminPage() {
   const [addProjectOpen, setAddProjectOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
 
+  // Bundles state
+  const [bundles, setBundles] = useState<Bundle[]>([]);
+  const [bundlesLoading, setBundlesLoading] = useState(false);
+  const [addBundleOpen, setAddBundleOpen] = useState(false);
+  const [editBundle, setEditBundle] = useState<Bundle | null>(null);
+  const [bundleForm, setBundleForm] = useState({ id: "", title: "", description: "", price: "", color: "#2A2FB8", project_ids: [] as string[] });
+  const [savingBundle, setSavingBundle] = useState(false);
+  const [deletingBundle, setDeletingBundle] = useState<string | null>(null);
+
   // Viva state
   const [vivaRows, setVivaRows] = useState<QA[]>([]);
   const [vivaTab, setVivaTab] = useState("ml");
@@ -127,6 +137,7 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => { fetchBundles(); }, []);
   useEffect(() => { fetchViva(); }, [vivaTab]);
 
   async function fetchProjects() {
@@ -267,6 +278,93 @@ export default function AdminPage() {
     if (error) showToast("❌ " + error.message, false);
     else { showToast("🗑 Project deleted"); fetchProjects(); }
     setDeleting(null);
+  }
+
+  // ── Bundles ─────────────────────────────────────────────────────────────────
+
+  async function fetchBundles() {
+    setBundlesLoading(true);
+    const { data } = await supabase.from("bundles").select("*").order("created_at", { ascending: false });
+    setBundles(data ?? []);
+    setBundlesLoading(false);
+  }
+
+  function bundleField(key: keyof typeof bundleForm, value: string) {
+    setBundleForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function toggleBundleProject(id: string) {
+    setBundleForm((f) => ({
+      ...f,
+      project_ids: f.project_ids.includes(id) ? f.project_ids.filter((x) => x !== id) : [...f.project_ids, id],
+    }));
+  }
+
+  function resetBundleForm() {
+    setBundleForm({ id: "", title: "", description: "", price: "", color: "#2A2FB8", project_ids: [] });
+  }
+
+  async function handleAddBundle(e: React.SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSavingBundle(true);
+    try {
+      const payload = {
+        id: bundleForm.id || "b" + Date.now().toString().slice(-6),
+        title: bundleForm.title,
+        description: bundleForm.description,
+        price: parseInt(bundleForm.price) || 0,
+        project_ids: bundleForm.project_ids,
+        color: bundleForm.color,
+      };
+      const { error } = await supabase.from("bundles").insert(payload);
+      if (error) throw error;
+      showToast("✅ Bundle added!");
+      resetBundleForm();
+      setAddBundleOpen(false);
+      fetchBundles();
+    } catch (err: any) {
+      showToast("❌ " + (err.message ?? "Something went wrong"), false);
+    } finally {
+      setSavingBundle(false);
+    }
+  }
+
+  async function handleUpdateBundle(e: React.SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editBundle) return;
+    setSavingBundle(true);
+    try {
+      const payload = {
+        title: bundleForm.title,
+        description: bundleForm.description,
+        price: parseInt(bundleForm.price) || 0,
+        project_ids: bundleForm.project_ids,
+        color: bundleForm.color,
+      };
+      const { error } = await supabase.from("bundles").update(payload).eq("id", editBundle.id);
+      if (error) throw error;
+      showToast("✅ Bundle updated!");
+      setEditBundle(null);
+      resetBundleForm();
+      fetchBundles();
+    } catch (err: any) {
+      showToast("❌ " + (err.message ?? "Something went wrong"), false);
+    } finally {
+      setSavingBundle(false);
+    }
+  }
+
+  async function handleDeleteBundle(id: string) {
+    setDeletingBundle(id);
+    const { error } = await supabase.from("bundles").delete().eq("id", id);
+    if (error) showToast("❌ " + error.message, false);
+    else { showToast("🗑 Bundle deleted"); fetchBundles(); }
+    setDeletingBundle(null);
+  }
+
+  function openEditBundle(b: Bundle) {
+    setBundleForm({ id: b.id, title: b.title, description: b.description, price: String(b.price), color: b.color, project_ids: b.project_ids });
+    setEditBundle(b);
   }
 
   // ── Templates ───────────────────────────────────────────────────────────────
@@ -629,6 +727,170 @@ export default function AdminPage() {
     </div>
   );
 
+  const BundleFormFields = (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div>
+          <label style={labelStyle}>Title *</label>
+          <input required style={inputStyle} value={bundleForm.title} onChange={e => bundleField("title", e.target.value)} placeholder="Final Year AI Bundle" />
+        </div>
+        <div>
+          <label style={labelStyle}>ID (auto if blank)</label>
+          <input style={inputStyle} value={bundleForm.id} onChange={e => bundleField("id", e.target.value)} placeholder="b01" />
+        </div>
+      </div>
+      <div>
+        <label style={labelStyle}>Description</label>
+        <textarea rows={3} style={{ ...inputStyle, resize: "vertical" }} value={bundleForm.description} onChange={e => bundleField("description", e.target.value)} placeholder="Short description of what's in this bundle..." />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div>
+          <label style={labelStyle}>Bundle Price (₹) *</label>
+          <input required type="number" style={inputStyle} value={bundleForm.price} onChange={e => bundleField("price", e.target.value)} placeholder="2999" />
+        </div>
+        <div>
+          <label style={labelStyle}>Card Color</label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 4 }}>
+            {COLORS.map(c => (
+              <button key={c.value} type="button" title={c.label} onClick={() => bundleField("color", c.value)}
+                style={{ width: 28, height: 28, borderRadius: 8, background: c.value, border: bundleForm.color === c.value ? "2px solid var(--ink)" : "2px solid transparent", cursor: "pointer" }} />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div>
+        <label style={labelStyle}>Projects in Bundle</label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 300, overflowY: "auto" }}>
+          {projects.map(p => {
+            const checked = bundleForm.project_ids.includes(p.id);
+            return (
+              <div key={p.id} onClick={() => toggleBundleProject(p.id)}
+                style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10, border: `1px solid ${checked ? "var(--ink)" : "var(--line)"}`, background: checked ? "var(--card)" : "transparent", cursor: "pointer", transition: "all .15s" }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.color, flexShrink: 0 }} />
+                <span style={{ flex: 1, fontSize: 13, fontWeight: checked ? 600 : 400 }}>{p.title}</span>
+                <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>₹{p.price.toLocaleString("en-IN")}</span>
+                <div style={{ width: 16, height: 16, borderRadius: 4, border: `1px solid ${checked ? accent : "var(--line)"}`, background: checked ? accent : "transparent", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                  {checked && <svg width="8" height="6" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="var(--accent-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {bundleForm.project_ids.length > 0 && (
+          <div style={{ marginTop: 8, fontSize: 12, color: "var(--muted)" }}>
+            {bundleForm.project_ids.length} project{bundleForm.project_ids.length !== 1 ? "s" : ""} selected ·{" "}
+            full price ₹{projects.filter(p => bundleForm.project_ids.includes(p.id)).reduce((s, p) => s + p.price, 0).toLocaleString("en-IN")}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const AddBundleDialog = addBundleOpen && (
+    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "var(--paper)", display: "flex", flexDirection: "column" }}>
+      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 28px", height: 61, display: "flex", alignItems: "center", gap: 12, flexShrink: 0, background: "var(--card)" }}>
+        <button onClick={() => { setAddBundleOpen(false); resetBundleForm(); }} style={{ ...iconBtn, width: 34, height: 34 }}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+        </button>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>Add New Bundle</div>
+      </div>
+      <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: "36px 32px", maxWidth: 780, width: "100%", margin: "0 auto" }}>
+        <form onSubmit={handleAddBundle} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {BundleFormFields}
+          <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
+            <button type="submit" disabled={savingBundle}
+              style={{ padding: "14px 28px", borderRadius: 12, border: "none", background: savingBundle ? "var(--muted)" : accent, color: "var(--accent-ink)", fontSize: 15, fontWeight: 700, cursor: savingBundle ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+              {savingBundle ? "Saving..." : "Add Bundle"}
+            </button>
+            <button type="button" onClick={() => { setAddBundleOpen(false); resetBundleForm(); }}
+              style={{ padding: "14px 20px", borderRadius: 12, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  const EditBundleDialog = editBundle && (
+    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "var(--paper)", display: "flex", flexDirection: "column" }}>
+      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 28px", height: 61, display: "flex", alignItems: "center", gap: 12, flexShrink: 0, background: "var(--card)" }}>
+        <button onClick={() => { setEditBundle(null); resetBundleForm(); }} style={{ ...iconBtn, width: 34, height: 34 }}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+        </button>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>Edit Bundle <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 400, marginLeft: 6 }}>{editBundle.id}</span></div>
+      </div>
+      <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: "36px 32px", maxWidth: 780, width: "100%", margin: "0 auto" }}>
+        <form onSubmit={handleUpdateBundle} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {BundleFormFields}
+          <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
+            <button type="submit" disabled={savingBundle}
+              style={{ padding: "14px 28px", borderRadius: 12, border: "none", background: savingBundle ? "var(--muted)" : accent, color: "var(--accent-ink)", fontSize: 15, fontWeight: 700, cursor: savingBundle ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+              {savingBundle ? "Saving..." : "Save Changes"}
+            </button>
+            <button type="button" onClick={() => { setEditBundle(null); resetBundleForm(); }}
+              style={{ padding: "14px 20px", borderRadius: 12, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  const BundlesSection = (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Bundles <span style={{ fontSize: 14, color: "var(--muted)", fontWeight: 400 }}>({bundles.length})</span></h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)" }}>Group projects into discounted bundles.</p>
+        </div>
+        <button onClick={() => setAddBundleOpen(true)}
+          style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: accent, color: "var(--accent-ink)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
+          + Add Bundle
+        </button>
+      </div>
+
+      {bundlesLoading ? (
+        <div style={{ textAlign: "center", padding: "40px 0", color: "var(--muted)", fontSize: 13 }}>Loading…</div>
+      ) : bundles.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: "var(--muted)", border: "1px dashed var(--line)", borderRadius: 16 }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>🎁</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>No bundles yet</div>
+          <div style={{ fontSize: 12, marginTop: 4 }}>Click "Add Bundle" to get started.</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {bundles.map(b => {
+            const bundledProjects = projects.filter(p => b.project_ids.includes(p.id));
+            const fullPrice = bundledProjects.reduce((s, p) => s + p.price, 0);
+            return (
+              <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, background: "var(--card)", border: "1px solid var(--line)" }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: b.color, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.title}</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                    {b.project_ids.length} project{b.project_ids.length !== 1 ? "s" : ""} · ₹{b.price.toLocaleString("en-IN")}
+                    {fullPrice > b.price && <span style={{ marginLeft: 6, textDecoration: "line-through", opacity: 0.5 }}>₹{fullPrice.toLocaleString("en-IN")}</span>}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 6, flexShrink: 0, alignItems: "center" }}>
+                  <span className="mono" style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "var(--paper-2)", color: "var(--muted)" }}>{b.id}</span>
+                  <button onClick={() => openEditBundle(b)} style={{ ...iconBtn, color: accent, borderColor: accent }} title="Edit">
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /></svg>
+                  </button>
+                  <button onClick={() => handleDeleteBundle(b.id)} disabled={deletingBundle === b.id} style={iconBtn} title="Delete">
+                    {deletingBundle === b.id ? "…" : <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
   const ProjectsSection = (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
@@ -869,6 +1131,12 @@ export default function AdminPage() {
             icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="3" rx="1" stroke="currentColor" strokeWidth="1.4" /><rect x="1" y="6" width="7" height="3" rx="1" stroke="currentColor" strokeWidth="1.4" /><rect x="1" y="11" width="5" height="2" rx="1" stroke="currentColor" strokeWidth="1.4" /></svg>}
           />
           <NavLink
+            label="Bundles"
+            active={section === "bundles"}
+            onClick={() => setSection("bundles")}
+            icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="4" width="12" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M4 4V3a3 3 0 0 1 6 0v1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>}
+          />
+          <NavLink
             label="Viva Data"
             active={section === "viva"}
             onClick={() => setSection("viva")}
@@ -879,6 +1147,7 @@ export default function AdminPage() {
         {/* Main content */}
         <main style={{ flex: 1, overflowY: "auto", padding: "36px 32px" }}>
           {section === "projects" && ProjectsSection}
+          {section === "bundles" && BundlesSection}
           {section === "templates" && TemplatesSection}
           {section === "viva" && VivaSection}
         </main>
@@ -886,6 +1155,8 @@ export default function AdminPage() {
 
       {AddProjectDialog}
       {EditProjectDialog}
+      {AddBundleDialog}
+      {EditBundleDialog}
     </div>
   );
 }
