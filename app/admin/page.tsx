@@ -40,7 +40,7 @@ const DEFAULT_TEMPLATES: Record<string, string[]> = {
 
 type IncludeItem = { name: string; price: string };
 type QA = { id: string; cat: string; question: string; answer: string; order_index: number };
-type Bundle = { id: string; title: string; description: string; price: number; project_ids: string[]; color: string; created_at: string };
+type Bundle = { id: string; title: string; description: string; price: number; project_ids: string[]; color: string; features: string[]; cta: string; featured: boolean; created_at: string };
 type Section = "projects" | "templates" | "viva" | "bundles";
 
 const EMPTY_FORM = {
@@ -107,7 +107,7 @@ export default function AdminPage() {
   const [bundlesLoading, setBundlesLoading] = useState(false);
   const [addBundleOpen, setAddBundleOpen] = useState(false);
   const [editBundle, setEditBundle] = useState<Bundle | null>(null);
-  const [bundleForm, setBundleForm] = useState({ id: "", title: "", description: "", price: "", color: "#2A2FB8", project_ids: [] as string[] });
+  const [bundleForm, setBundleForm] = useState({ id: "", title: "", description: "", price: "", color: "#2A2FB8", project_ids: [] as string[], features: "", cta: "", featured: false });
   const [savingBundle, setSavingBundle] = useState(false);
   const [deletingBundle, setDeletingBundle] = useState<string | null>(null);
 
@@ -301,7 +301,7 @@ export default function AdminPage() {
   }
 
   function resetBundleForm() {
-    setBundleForm({ id: "", title: "", description: "", price: "", color: "#2A2FB8", project_ids: [] });
+    setBundleForm({ id: "", title: "", description: "", price: "", color: "#2A2FB8", project_ids: [], features: "", cta: "", featured: false });
   }
 
   async function handleAddBundle(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -315,6 +315,9 @@ export default function AdminPage() {
         price: parseInt(bundleForm.price) || 0,
         project_ids: bundleForm.project_ids,
         color: bundleForm.color,
+        features: bundleForm.features.split("\n").map(f => f.trim()).filter(Boolean),
+        cta: bundleForm.cta,
+        featured: bundleForm.featured,
       };
       const { error } = await supabase.from("bundles").insert(payload);
       if (error) throw error;
@@ -340,6 +343,9 @@ export default function AdminPage() {
         price: parseInt(bundleForm.price) || 0,
         project_ids: bundleForm.project_ids,
         color: bundleForm.color,
+        features: bundleForm.features.split("\n").map(f => f.trim()).filter(Boolean),
+        cta: bundleForm.cta,
+        featured: bundleForm.featured,
       };
       const { error } = await supabase.from("bundles").update(payload).eq("id", editBundle.id);
       if (error) throw error;
@@ -363,7 +369,17 @@ export default function AdminPage() {
   }
 
   function openEditBundle(b: Bundle) {
-    setBundleForm({ id: b.id, title: b.title, description: b.description, price: String(b.price), color: b.color, project_ids: b.project_ids });
+    setBundleForm({ 
+      id: b.id, 
+      title: b.title, 
+      description: b.description, 
+      price: String(b.price), 
+      color: b.color, 
+      project_ids: b.project_ids || [],
+      features: (b.features || []).join("\n"),
+      cta: b.cta || "",
+      featured: b.featured ?? false
+    });
     setEditBundle(b);
   }
 
@@ -782,6 +798,22 @@ export default function AdminPage() {
             full price ₹{projects.filter(p => bundleForm.project_ids.includes(p.id)).reduce((s, p) => s + p.price, 0).toLocaleString("en-IN")}
           </div>
         )}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <div>
+          <label style={labelStyle}>CTA Text</label>
+          <input style={inputStyle} value={bundleForm.cta} onChange={e => bundleField("cta", e.target.value)} placeholder="Get the pack" />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 24 }}>
+          <input type="checkbox" id="bundle-featured" checked={bundleForm.featured} onChange={e => setBundleForm(f => ({ ...f, featured: e.target.checked }))} />
+          <label htmlFor="bundle-featured" style={{ ...labelStyle, marginBottom: 0, cursor: "pointer" }}>Featured / Highlighted</label>
+        </div>
+      </div>
+
+      <div>
+        <label style={labelStyle}>Features (one per line)</label>
+        <textarea rows={6} style={{ ...inputStyle, resize: "vertical" }} value={bundleForm.features} onChange={e => bundleField("features", e.target.value)} placeholder="Any 3 projects&#10;Full source code&#10;30-day support..." />
       </div>
     </div>
   );

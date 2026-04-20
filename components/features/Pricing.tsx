@@ -1,14 +1,40 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
-import { BUNDLES } from "@/lib/data";
 import { ArrowUpRight } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { createClient } from "@/utils/supabase/client";
 
 export function Pricing() {
   const { accent } = useProjectHouse();
   const isMobile = useIsMobile();
+  const supabase = createClient();
+
+  const [bundles, setBundles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchBundles() {
+      try {
+        const { data, error } = await supabase
+          .from("bundles")
+          .select("*")
+          .order("price", { ascending: true });
+        
+        if (error) throw error;
+        setBundles(data || []);
+      } catch (err) {
+        console.error("Error fetching bundles:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBundles();
+  }, []);
+
+  if (loading) return null; // Or a skeleton
+  if (bundles.length === 0) return null;
 
   return (
     <section id="pricing" style={{ padding: isMobile ? "60px 16px" : "100px 28px" }}>
@@ -39,7 +65,7 @@ export function Pricing() {
             marginTop: 48,
           }}
         >
-          {BUNDLES.map((b) => {
+          {bundles.map((b) => {
             const feat = b.featured;
             return (
               <div
@@ -84,10 +110,10 @@ export function Pricing() {
                         color: feat ? "rgba(255,255,255,.6)" : "var(--muted)",
                       }}
                     >
-                      {b.tagline}
+                      {b.description}
                     </div>
                     <div className="serif" style={{ fontSize: 42, letterSpacing: "-.02em", marginTop: 6 }}>
-                      {b.name}
+                      {b.title}
                     </div>
                   </div>
                 </div>
@@ -108,7 +134,7 @@ export function Pricing() {
                     flex: 1,
                   }}
                 >
-                  {b.features.map((f) => (
+                  {(b.features || []).map((f: string) => (
                     <li key={f} style={{ display: "flex", gap: 10, alignItems: "start", fontSize: 14, lineHeight: 1.4 }}>
                       <span
                         style={{
@@ -158,7 +184,7 @@ export function Pricing() {
                     gap: 8,
                   }}
                 >
-                  {b.cta} <ArrowUpRight />
+                  {b.cta || "Buy now"} <ArrowUpRight />
                 </button>
               </div>
             );
