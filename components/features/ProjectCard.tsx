@@ -387,3 +387,50 @@ export function ProjectCard({
     </article>
   );
 }
+
+export function ProjectCardSkeleton() {
+  const shine: React.CSSProperties = {
+    background: "var(--paper-2)",
+    borderRadius: 6,
+    animation: "skeletonPulse 1.4s ease-in-out infinite",
+  };
+  return (
+    <>
+      <style>{`
+        @keyframes skeletonPulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
+      `}</style>
+      <div style={{
+        border: "1px solid var(--line)", borderRadius: 16, overflow: "hidden",
+        background: "var(--card)", display: "flex", flexDirection: "column",
+      }}>
+        {/* colour band */}
+        <div style={{ height: 180, ...shine, borderRadius: 0, display: "grid", placeItems: "center" }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.25 }}>
+            <path stroke="currentColor" strokeLinejoin="round" strokeWidth="2" d="M10 3v4a1 1 0 0 1-1 1H5m14-4v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7.914a1 1 0 0 1 .293-.707l3.914-3.914A1 1 0 0 1 9.914 3H18a1 1 0 0 1 1 1Z"/>
+          </svg>
+        </div>
+        {/* body */}
+        <div style={{ padding: 20, flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* stack pills */}
+          <div style={{ display: "flex", gap: 6 }}>
+            {[48, 60, 40].map((w, i) => <div key={i} style={{ ...shine, height: 18, width: w, borderRadius: 999 }} />)}
+          </div>
+          {/* title */}
+          <div style={{ ...shine, height: 20, width: "75%" }} />
+          {/* desc lines */}
+          <div style={{ ...shine, height: 13, width: "100%" }} />
+          <div style={{ ...shine, height: 13, width: "85%" }} />
+          <div style={{ ...shine, height: 13, width: "60%" }} />
+          {/* footer */}
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
+            <div style={{ ...shine, height: 14, width: 100 }} />
+            <div style={{ ...shine, height: 14, width: 60 }} />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { CATEGORIES } from "@/lib/data";
-import { ProjectCard } from "./ProjectCard";
+import { ProjectCard, ProjectCardSkeleton } from "./ProjectCard";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 function CustomSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
@@ -99,7 +99,7 @@ function CustomSelect({ value, onChange, options }: { value: string; onChange: (
 }
 
 export function Catalog() {
-  const { accent, setOpenedProject, projects } = useProjectHouse();
+  const { accent, setOpenedProject, projects, projectsLoading } = useProjectHouse();
   const [cat, setCat] = useState("all");
   const [sort, setSort] = useState("popular");
   const [q, setQ] = useState("");
@@ -293,7 +293,10 @@ export function Catalog() {
             marginTop: 20,
           }}
         >
-          {filtered.map((p, i) => (
+          {projectsLoading && Array.from({ length: 4 }).map((_, i) => (
+            <ProjectCardSkeleton key={i} />
+          ))}
+          {!projectsLoading && filtered.map((p, i) => (
             <ProjectCard
               key={p.id}
               p={p}
@@ -302,7 +305,7 @@ export function Catalog() {
               featured={i === 0 && cat === "all" && !q}
             />
           ))}
-          {filtered.length === 0 && !q.trim() && (
+          {filtered.length === 0 && !q.trim() && !projectsLoading && (
             <div
               style={{
                 gridColumn: "1/-1",

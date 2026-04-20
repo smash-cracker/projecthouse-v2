@@ -20,6 +20,7 @@ interface ProjectHouseState {
   accent: string;
   setAccent: (c: string) => void;
   projects: any[];
+  projectsLoading: boolean;
   openedProject: any | null;
   setOpenedProject: React.Dispatch<React.SetStateAction<any | null>>;
   searchOpen: boolean;
@@ -70,6 +71,7 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
   const [dark, setDark] = useState(initialTheme === "dark");
   const [accent, setAccentState] = useState(TWEAK_DEFAULTS.accent);
   const [projects, setProjects] = useState<any[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
   const [openedProject, setOpenedProject] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tweaksVisible, setTweaksVisible] = useState(false);
@@ -86,7 +88,7 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
   useEffect(() => {
     const supabase = createClient();
     supabase.from("projects").select("*").order("created_at", { ascending: false })
-      .then(({ data }) => setProjects(data ?? []));
+      .then(({ data }) => { setProjects(data ?? []); setProjectsLoading(false); });
   }, []);
 
   useEffect(() => {
@@ -156,6 +158,7 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
         accent,
         setAccent,
         projects,
+        projectsLoading,
         openedProject,
         setOpenedProject,
         searchOpen,
