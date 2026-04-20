@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useProjectHouse } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { VIVA_TABS } from "@/lib/data";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
 type VivaRow = { id: string; question: string; answer: string; order_index: number };
+type PurchasedProject = { id: string; title: string; cat: string };
 const supabase = createClient();
-
-// ——— Shared sub-components ——————————————————————————————————
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -87,28 +86,143 @@ const TypingDots = () => (
   </span>
 );
 
-function ChatPanel({ accent }: { accent: string }) {
+function ProjectPicker({
+  projects,
+  query,
+  activeIdx,
+  accent,
+  onSelect,
+}: {
+  projects: PurchasedProject[];
+  query: string;
+  activeIdx: number;
+  accent: string;
+  onSelect: (p: PurchasedProject) => void;
+}) {
+  const filtered = query
+    ? projects.filter((p) => p.title.toLowerCase().includes(query.toLowerCase()))
+    : projects;
+
+  if (filtered.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        position: "absolute", bottom: "100%", left: 0, right: 0,
+        marginBottom: 8, zIndex: 50,
+        background: "var(--card)", border: "1px solid var(--line)",
+        borderRadius: 12, overflow: "hidden",
+        boxShadow: "0 8px 32px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08)",
+        animation: "pickerIn .15s ease",
+      }}
+    >
+      <div style={{
+        padding: "8px 14px 6px",
+        fontSize: 10, color: "var(--muted)",
+        letterSpacing: ".1em", textTransform: "uppercase",
+        fontFamily: "var(--font-jetbrains-mono, monospace)",
+        borderBottom: "1px solid var(--line)",
+      }}>
+        Your projects — type to filter
+      </div>
+      {filtered.map((p, i) => (
+        <button
+          key={p.id}
+          onMouseDown={(e) => { e.preventDefault(); onSelect(p); }}
+          style={{
+            width: "100%", padding: "10px 14px",
+            background: i === activeIdx ? accent + "22" : "transparent",
+            border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 10,
+            transition: "background .1s",
+            borderLeft: i === activeIdx ? `3px solid ${accent}` : "3px solid transparent",
+          }}
+        >
+          <span style={{
+            width: 28, height: 28, borderRadius: 8,
+            background: i === activeIdx ? accent : "var(--line)",
+            color: i === activeIdx ? "var(--accent-ink)" : "var(--muted)",
+            display: "grid", placeItems: "center",
+            fontFamily: "var(--font-jetbrains-mono, monospace)",
+            fontSize: 9, fontWeight: 700, flexShrink: 0,
+            transition: "background .1s, color .1s",
+          }}>
+            {p.id.toUpperCase()}
+          </span>
+          <span style={{
+            fontSize: 13, color: "var(--ink)", fontFamily: "inherit",
+            textAlign: "left", lineHeight: 1.4,
+          }}>
+            {p.title}
+          </span>
+        </button>
+      ))}
+      <style>{`
+        @keyframes pickerIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedProjects: PurchasedProject[] }) {
   const isMobile = useIsMobile();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  // Context project injected via @-mention
+  const [contextProject, setContextProject] = useState<PurchasedProject | null>(null);
+  // @ picker state
+  const [atQuery, setAtQuery] = useState<string | null>(null); // null = picker closed
+  const [pickerIdx, setPickerIdx] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Derive filtered list from atQuery
+  const pickerProjects = atQuery !== null
+    ? (atQuery ? purchasedProjects.filter((p) => p.title.toLowerCase().includes(atQuery.toLowerCase())) : purchasedProjects)
+    : [];
+
+  const selectProject = useCallback((p: PurchasedProject) => {
+    setContextProject(p);
+    // Strip the @query from input
+    setInput((prev) => {
+      const atIdx = prev.lastIndexOf("@");
+      return atIdx >= 0 ? prev.slice(0, atIdx) : prev;
+    });
+    setAtQuery(null);
+    setPickerIdx(0);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, []);
+
+  const clearContext = () => {
+    setContextProject(null);
+  };
+
   const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
 
-    const userMsg: Message = { role: "user", content: trimmed };
+    // Prepend hidden project context if one is selected
+    const contextPrefix = contextProject
+      ? `[Project: "${contextProject.title}" — id: ${contextProject.id}]\n\n`
+      : "";
+    const userPayload = contextPrefix + trimmed;
+
+    const userMsg: Message = { role: "user", content: userPayload };
     const next = [...messages, userMsg];
     setMessages(next);
     setInput("");
     if (inputRef.current) inputRef.current.style.height = "auto";
     setLoading(true);
+    // Keep context sticky across the conversation — don't clear it
 
     try {
       const res = await fetch("/api/chat", {
@@ -157,11 +271,58 @@ function ChatPanel({ accent }: { accent: string }) {
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setInput(val);
+
+    // Detect @ trigger: find the last @ that is either at start or preceded by whitespace
+    const cursor = e.target.selectionStart ?? val.length;
+    const textUpToCursor = val.slice(0, cursor);
+    const atMatch = textUpToCursor.match(/(?:^|\s)@([^\s]*)$/);
+    if (atMatch) {
+      setAtQuery(atMatch[1]); // could be empty string
+      setPickerIdx(0);
+    } else {
+      setAtQuery(null);
+    }
+  };
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (atQuery !== null && pickerProjects.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setPickerIdx((i) => (i + 1) % pickerProjects.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setPickerIdx((i) => (i - 1 + pickerProjects.length) % pickerProjects.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        selectProject(pickerProjects[pickerIdx]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setAtQuery(null);
+        return;
+      }
+    }
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); }
   };
 
   const isEmpty = messages.length === 0;
+  const pickerOpen = atQuery !== null && purchasedProjects.length > 0;
+
+  // Display messages, stripping hidden project prefix from user bubbles
+  const displayMessages = messages.map((msg) => ({
+    ...msg,
+    displayContent: msg.role === "user"
+      ? msg.content.replace(/^\[Project:[^\]]+\]\n\n/, "")
+      : msg.content,
+  }));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -191,8 +352,11 @@ function ChatPanel({ accent }: { accent: string }) {
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-.01em" }}>Project Bot</div>
-              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6, lineHeight: 1.6, maxWidth: 320 }}>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6, lineHeight: 1.6, maxWidth: 340 }}>
                 Ask me anything about your project — methodology, results, or how to handle tough viva questions.
+                {purchasedProjects.length > 0 && (
+                  <><br/><span style={{ color: accent, fontWeight: 600 }}>Tip:</span> Type <code style={{ fontFamily: "monospace", background: "var(--line)", padding: "1px 5px", borderRadius: 4 }}>@</code> to focus on a specific project.</>  
+                )}
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: isMobile ? "100%" : 420 }}>
@@ -223,9 +387,9 @@ function ChatPanel({ accent }: { accent: string }) {
           </div>
         )}
 
-        {messages.map((msg, i) => {
+        {displayMessages.map((msg, i) => {
           const isUser = msg.role === "user";
-          const isStreaming = !isUser && i === messages.length - 1 && msg.content === "" && loading;
+          const isStreaming = !isUser && i === displayMessages.length - 1 && msg.content === "" && loading;
           return (
             <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: isUser ? "row-reverse" : "row" }}>
               {isUser ? <UserAvatar /> : <BotAvatar accent={accent} />}
@@ -245,8 +409,8 @@ function ChatPanel({ accent }: { accent: string }) {
                   {isStreaming
                     ? <TypingDots />
                     : isUser
-                      ? <span style={{ whiteSpace: "pre-wrap" }}>{msg.content}</span>
-                      : <BotText text={msg.content} />
+                      ? <span style={{ whiteSpace: "pre-wrap" }}>{msg.displayContent}</span>
+                      : <BotText text={msg.displayContent} />
                   }
                 </div>
               </div>
@@ -254,7 +418,7 @@ function ChatPanel({ accent }: { accent: string }) {
           );
         })}
 
-        {loading && messages[messages.length - 1]?.role === "user" && (
+        {loading && displayMessages[displayMessages.length - 1]?.role === "user" && (
           <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
             <BotAvatar accent={accent} />
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -270,50 +434,90 @@ function ChatPanel({ accent }: { accent: string }) {
       </div>
 
       <div style={{ borderTop: "1px solid var(--line)", padding: isMobile ? "10px 12px" : "14px 20px", background: "var(--paper)" }}>
-        <div style={{
-          display: "flex", gap: 10, alignItems: "flex-end",
-          background: "var(--card)", border: "1px solid var(--line)",
-          borderRadius: 14, padding: "8px 8px 8px 16px",
-        }}>
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder="Ask about your project or viva prep…"
-            rows={1}
-            style={{
-              flex: 1, resize: "none", border: "none", outline: "none",
-              background: "transparent", color: "var(--ink)",
-              fontSize: 14, fontFamily: "inherit", lineHeight: 1.55,
-              maxHeight: 120, overflowY: "auto", padding: "4px 0",
-            }}
-            onInput={(e) => {
-              const el = e.currentTarget;
-              el.style.height = "auto";
-              el.style.height = Math.min(el.scrollHeight, 120) + "px";
-            }}
-          />
-          <button
-            onClick={() => send(input)}
-            disabled={!input.trim() || loading}
-            style={{
-              width: 36, height: 36, borderRadius: 9, border: "none", flexShrink: 0,
-              background: input.trim() && !loading ? accent : "var(--line)",
-              color: input.trim() && !loading ? "var(--accent-ink)" : "var(--muted)",
-              cursor: input.trim() && !loading ? "pointer" : "default",
-              display: "grid", placeItems: "center",
-              transition: "background .15s, color .15s",
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+
+        {/* Active context chip */}
+        {contextProject && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, marginBottom: 8,
+            padding: "5px 10px", borderRadius: 8,
+            background: accent + "18", border: `1px solid ${accent}33`,
+            width: "fit-content", maxWidth: "100%",
+          }}>
+            <span style={{ fontSize: 11, color: accent, fontWeight: 600 }}>
+              @{contextProject.title}
+            </span>
+            <button
+              onClick={clearContext}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: accent, fontSize: 14, lineHeight: 1, padding: 0,
+                display: "grid", placeItems: "center",
+              }}
+              aria-label="Remove project context"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Input row — position:relative so picker can anchor to it */}
+        <div ref={inputWrapRef} style={{ position: "relative" }}>
+          {pickerOpen && (
+            <ProjectPicker
+              projects={purchasedProjects}
+              query={atQuery ?? ""}
+              activeIdx={pickerIdx}
+              accent={accent}
+              onSelect={selectProject}
+            />
+          )}
+          <div style={{
+            display: "flex", gap: 10, alignItems: "flex-end",
+            background: "var(--card)", border: `1px solid ${pickerOpen ? accent : "var(--line)"}`,
+            borderRadius: 14, padding: "8px 8px 8px 16px",
+            transition: "border-color .15s",
+          }}>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={handleChange}
+              onKeyDown={onKeyDown}
+              placeholder={purchasedProjects.length > 0 ? "Type @ to select a project, or ask anything…" : "Ask about your project or viva prep…"}
+              rows={1}
+              style={{
+                flex: 1, resize: "none", border: "none", outline: "none",
+                background: "transparent", color: "var(--ink)",
+                fontSize: 14, fontFamily: "inherit", lineHeight: 1.55,
+                maxHeight: 120, overflowY: "auto", padding: "4px 0",
+              }}
+              onInput={(e) => {
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 120) + "px";
+              }}
+            />
+            <button
+              onClick={() => send(input)}
+              disabled={!input.trim() || loading}
+              style={{
+                width: 36, height: 36, borderRadius: 9, border: "none", flexShrink: 0,
+                background: input.trim() && !loading ? accent : "var(--line)",
+                color: input.trim() && !loading ? "var(--accent-ink)" : "var(--muted)",
+                cursor: input.trim() && !loading ? "pointer" : "default",
+                display: "grid", placeItems: "center",
+                transition: "background .15s, color .15s",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
+
         {!isMobile && (
           <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7, paddingInline: 4 }}>
-            Enter to send · Shift+Enter for new line
+            Enter to send · Shift+Enter for new line{purchasedProjects.length > 0 ? " · @ to tag a project" : ""}
           </div>
         )}
       </div>
@@ -328,8 +532,6 @@ function ChatPanel({ accent }: { accent: string }) {
   );
 }
 
-// ——— Page ——————————————————————————————————————————————————
-
 export default function VivaPage() {
   const { accent, user, setAuthOpen } = useProjectHouse();
   const isMobile = useIsMobile();
@@ -339,6 +541,7 @@ export default function VivaPage() {
   const [rows, setRows] = useState<VivaRow[]>([]);
   const [allRows, setAllRows] = useState<VivaRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [purchasedProjects, setPurchasedProjects] = useState<PurchasedProject[]>([]);
 
   useEffect(() => {
     async function fetchAll() {
@@ -352,6 +555,24 @@ export default function VivaPage() {
     }
     fetchAll();
   }, []);
+
+  // Fetch purchased projects for the @-mention picker
+  useEffect(() => {
+    if (!user) { setPurchasedProjects([]); return; }
+    async function fetchPurchased() {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) { setPurchasedProjects([]); return; }
+      const { data } = await supabase
+        .from("payments")
+        .select("project_id, projects(id, title, cat)")
+        .eq("user_id", authUser.id);
+      const projects: PurchasedProject[] = (data ?? [])
+        .map((row: any) => row.projects)
+        .filter(Boolean);
+      setPurchasedProjects(projects);
+    }
+    fetchPurchased();
+  }, [user]);
 
   useEffect(() => {
     setRows(allRows.filter((r: any) => r.cat === tab));
@@ -532,7 +753,7 @@ export default function VivaPage() {
                 </button>
               </div>
             ) : (
-              <ChatPanel accent={accent} />
+              <ChatPanel accent={accent} purchasedProjects={purchasedProjects} />
             )}
           </div>
         ) : (

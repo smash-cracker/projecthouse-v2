@@ -28,8 +28,6 @@ const TIMELINE = [
   ["Day 7",   "Viva prep — we answer your questions"],
 ];
 
-// ——— Ask AI sub-components ———————————————————————————————————
-
 type Message = { role: "user" | "assistant"; content: string };
 
 const AI_SUGGESTIONS = [
