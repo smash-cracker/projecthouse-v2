@@ -217,9 +217,9 @@ export function Nav() {
                             Admin Dashboard
                           </a>
                         )}
-                        {["My projects", "Favorites"].map((x) => (
-                          <a key={x} href="#" style={{ display: "block", padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
-                            {x}
+                        {([["My projects", "/my-projects"], ["Favorites", "/favorites"]] as const).map(([label, href]) => (
+                          <a key={label} href={href} style={{ display: "block", padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
+                            {label}
                           </a>
                         ))}
                         <button
@@ -338,10 +338,10 @@ export function Nav() {
                       Admin Dashboard
                     </a>
                   )}
-                  {["My projects", "Favorites"].map((x) => (
+                  {([["My projects", "/my-projects"], ["Favorites", "/favorites"]] as const).map(([label, href]) => (
                     <a
-                      key={x}
-                      href="#"
+                      key={label}
+                      href={href}
                       onClick={() => setMobileNavOpen(false)}
                       style={{
                         display: "block", padding: "10px 4px",
@@ -349,7 +349,7 @@ export function Nav() {
                         textDecoration: "none", color: "var(--ink)", fontSize: 14,
                       }}
                     >
-                      {x}
+                      {label}
                     </a>
                   ))}
                   <button
