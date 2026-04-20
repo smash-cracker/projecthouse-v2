@@ -411,7 +411,7 @@ export function Drawer() {
   };
   const customTotal = p_includes.reduce((sum, item, idx) => sel[idx] !== false ? sum + item.price : sum, 0);
   const fullTotal = p_includes.reduce((sum, item) => sum + item.price, 0);
-  const selCount = p_includes.filter((_, idx) => sel[idx] !== false).length;
+  const selCount = p_includes.filter((item, idx) => item.price > 0 && sel[idx] !== false).length;
 
   useEffect(() => {
     if (!project) {
@@ -639,15 +639,15 @@ export function Drawer() {
               <div className="mono" style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".12em" }}>
                 Your total
               </div>
-              {customTotal !== fullTotal && (
+              {customTotal !== fullTotal && fullTotal > 0 && (
                 <span style={{ fontSize: 11, color: "var(--muted)", textDecoration: "line-through" }}>
                   ₹{fullTotal.toLocaleString("en-IN")}
                 </span>
               )}
             </div>
             <div style={{ fontSize: 28, fontWeight: 600, letterSpacing: "-.02em", lineHeight: 1.1 }}>
-              ₹{customTotal.toLocaleString("en-IN")}
-              <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 400 }}> · {selCount} item{selCount !== 1 ? "s" : ""}</span>
+              ₹{(customTotal || p.price).toLocaleString("en-IN")}
+              {selCount > 0 && <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 400 }}> · {selCount} item{selCount !== 1 ? "s" : ""}</span>}
             </div>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
