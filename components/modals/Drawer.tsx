@@ -405,7 +405,10 @@ export function Drawer() {
   const isMobile = useIsMobile();
 
   const p_includes: { name: string; price: number }[] = (project as any)?.includes ?? [];
-  const toggleAddon = (idx: number) => setSel((s) => ({ ...s, [idx]: s[idx] !== false ? false : true }));
+  const toggleAddon = (idx: number) => {
+    if (p_includes[idx]?.price === 0) return;
+    setSel((s) => ({ ...s, [idx]: s[idx] !== false ? false : true }));
+  };
   const customTotal = p_includes.reduce((sum, item, idx) => sel[idx] !== false ? sum + item.price : sum, 0);
   const fullTotal = p_includes.reduce((sum, item) => sum + item.price, 0);
   const selCount = p_includes.filter((_, idx) => sel[idx] !== false).length;
@@ -563,7 +566,7 @@ export function Drawer() {
                         display: "flex", alignItems: "center", gap: 12, fontSize: 14,
                         padding: "14px 16px", background: checked ? "var(--card)" : "var(--paper-2)",
                         border: `1px solid ${checked ? "var(--ink)" : "var(--line)"}`, borderRadius: 10,
-                        cursor: "pointer", opacity: checked ? 1 : 0.5,
+                        cursor: item.price === 0 ? "default" : "pointer", opacity: checked ? 1 : 0.5,
                         transition: "opacity .15s, border-color .15s, background .15s",
                       }}
                     >
