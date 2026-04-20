@@ -72,9 +72,11 @@ export default async function MyProjectsPage() {
               });
 
               return (
-                <div
+                <a
                   key={payment.id}
+                  href={`/projects/${payment.project_id}`}
                   style={{
+                    textDecoration: "none", color: "inherit",
                     border: "1px solid var(--line)", borderRadius: 16,
                     overflow: "hidden", background: "var(--card)",
                     display: "flex", flexDirection: "column",
@@ -166,7 +168,7 @@ export default async function MyProjectsPage() {
                       </span>
                     </div>
                   </div>
-                </div>
+                </a>
               );
             })}
           </div>

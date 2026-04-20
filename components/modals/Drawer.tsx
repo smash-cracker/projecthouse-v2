@@ -668,10 +668,10 @@ export function Drawer() {
             </button>
             {alreadyPurchased ? (
               <a
-                href="/my-projects"
+                href={`/projects/${(p as any).id}`}
                 style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center", textDecoration: "none" }}
               >
-                View in My Projects <ArrowUpRight />
+                Open project <ArrowUpRight />
               </a>
             ) : (
               <RazorpayButton
