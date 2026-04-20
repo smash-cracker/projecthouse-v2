@@ -302,7 +302,23 @@ export function Catalog() {
               featured={i === 0 && cat === "all" && !q}
             />
           ))}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !q.trim() && (
+            <div
+              style={{
+                gridColumn: "1/-1",
+                padding: "60px 20px",
+                textAlign: "center",
+                color: "var(--muted)",
+                border: "1px dashed var(--line)",
+                borderRadius: 16,
+              }}
+            >
+              <div style={{ fontSize: 32, marginBottom: 10 }}>📭</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>No projects yet</div>
+              <div style={{ fontSize: 13, marginTop: 6 }}>Check back later — new projects are on the way.</div>
+            </div>
+          )}
+          {filtered.length === 0 && q.trim() && (
             <div
               style={{
                 gridColumn: "1/-1",
