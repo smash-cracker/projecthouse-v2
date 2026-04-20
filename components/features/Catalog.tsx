@@ -118,7 +118,7 @@ export function Catalog() {
     if (sort === "price-h") xs = [...xs].sort((a, b) => b.price - a.price);
     if (sort === "rated") xs = [...xs].sort((a, b) => b.rating - a.rating);
     return xs;
-  }, [cat, sort, q]);
+  }, [cat, sort, q, projects]);
 
   return (
     <section id="catalog" style={{ padding: isMobile ? "60px 16px 40px" : "100px 28px 60px" }}>
