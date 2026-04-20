@@ -41,7 +41,8 @@ const DEFAULT_TEMPLATES: Record<string, string[]> = {
 type IncludeItem = { name: string; price: string };
 type QA = { id: string; cat: string; question: string; answer: string; order_index: number };
 type Bundle = { id: string; title: string; description: string; price: number; project_ids: string[]; color: string; features: string[]; cta: string; featured: boolean; created_at: string };
-type Section = "projects" | "templates" | "viva" | "bundles";
+type Section = "projects" | "templates" | "viva" | "bundles" | "bookings";
+type DemoBooking = { id: string; user_id: string; project_id: string; project_title: string; name: string; email: string; slot_date: string; slot_time: string; status: "pending" | "cancelled"; created_at: string };
 
 const EMPTY_FORM = {
   id: "", cat: "ml", title: "", tag: "", price: "", level: "Intermediate",
@@ -111,6 +112,12 @@ export default function AdminPage() {
   const [savingBundle, setSavingBundle] = useState(false);
   const [deletingBundle, setDeletingBundle] = useState<string | null>(null);
 
+  // Bookings state
+  const [bookings, setBookings] = useState<DemoBooking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingsFilter, setBookingsFilter] = useState<"all" | "pending" | "cancelled">("all");
+  const [cancellingBooking, setCancellingBooking] = useState<string | null>(null);
+
   // Viva state
   const [vivaRows, setVivaRows] = useState<QA[]>([]);
   const [vivaTab, setVivaTab] = useState("ml");
@@ -139,6 +146,26 @@ export default function AdminPage() {
   useEffect(() => { fetchProjects(); }, []);
   useEffect(() => { fetchBundles(); }, []);
   useEffect(() => { fetchViva(); }, [vivaTab]);
+  useEffect(() => { if (section === "bookings") fetchBookings(); }, [section]);
+
+  async function fetchBookings() {
+    setBookingsLoading(true);
+    const { data } = await supabase
+      .from("demo_bookings")
+      .select("*")
+      .order("slot_date", { ascending: false })
+      .order("slot_time", { ascending: false });
+    setBookings(data ?? []);
+    setBookingsLoading(false);
+  }
+
+  async function handleCancelBooking(id: string) {
+    setCancellingBooking(id);
+    const { error } = await supabase.from("demo_bookings").update({ status: "cancelled" }).eq("id", id);
+    if (error) showToast("❌ " + error.message, false);
+    else { showToast("Booking cancelled"); fetchBookings(); }
+    setCancellingBooking(null);
+  }
 
   async function fetchProjects() {
     const { data } = await supabase
@@ -1007,6 +1034,66 @@ export default function AdminPage() {
     </div>
   );
 
+  const filteredBookings = bookings.filter(b => bookingsFilter === "all" || b.status === bookingsFilter);
+
+  const BookingsSection = (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Demo Bookings <span style={{ fontSize: 14, color: "var(--muted)", fontWeight: 400 }}>({bookings.length})</span></h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)" }}>All demo session bookings.</p>
+        </div>
+        <button onClick={fetchBookings} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid var(--line)", background: "transparent", color: "var(--ink)", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          Refresh
+        </button>
+      </div>
+
+      {/* Filter tabs */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+        {(["all", "pending", "cancelled"] as const).map(f => (
+          <button key={f} onClick={() => setBookingsFilter(f)}
+            style={{ padding: "7px 16px", borderRadius: 999, border: "1px solid var(--line)", fontFamily: "inherit", fontSize: 13, fontWeight: bookingsFilter === f ? 600 : 400, cursor: "pointer", background: bookingsFilter === f ? accent : "var(--card)", color: bookingsFilter === f ? "var(--accent-ink)" : "var(--ink)", textTransform: "capitalize" }}>
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {bookingsLoading ? (
+        <div style={{ textAlign: "center", padding: "40px 0", color: "var(--muted)", fontSize: 13 }}>Loading…</div>
+      ) : filteredBookings.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: "var(--muted)", border: "1px dashed var(--line)", borderRadius: 16 }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>📅</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>No bookings</div>
+          <div style={{ fontSize: 12, marginTop: 4 }}>No {bookingsFilter === "all" ? "" : bookingsFilter + " "}demo bookings found.</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {filteredBookings.map(b => (
+            <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, background: "var(--card)", border: "1px solid var(--line)", opacity: b.status === "cancelled" ? 0.6 : 1 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.project_title}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                  {b.name} · {b.email}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
+                <span className="mono" style={{ fontSize: 12, fontWeight: 600 }}>{b.slot_date} · {b.slot_time}</span>
+                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", background: b.status === "pending" ? "#14532D22" : "var(--paper-2)", color: b.status === "pending" ? "#16A34A" : "var(--muted)" }}>
+                  {b.status}
+                </span>
+              </div>
+              {b.status === "pending" && (
+                <button onClick={() => handleCancelBooking(b.id)} disabled={cancellingBooking === b.id} style={{ ...iconBtn, flexShrink: 0 }} title="Cancel booking">
+                  {cancellingBooking === b.id ? "…" : <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   const VivaSection = (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
@@ -1174,6 +1261,12 @@ export default function AdminPage() {
             onClick={() => setSection("viva")}
             icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="3" stroke="currentColor" strokeWidth="1.4" /><path d="M2 13c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>}
           />
+          <NavLink
+            label="Demo Bookings"
+            active={section === "bookings"}
+            onClick={() => setSection("bookings")}
+            icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M4 1v4M10 1v4M1 7h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>}
+          />
         </nav>
 
         {/* Main content */}
@@ -1182,6 +1275,7 @@ export default function AdminPage() {
           {section === "bundles" && BundlesSection}
           {section === "templates" && TemplatesSection}
           {section === "viva" && VivaSection}
+          {section === "bookings" && BookingsSection}
         </main>
       </div>
 
