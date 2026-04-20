@@ -1075,6 +1075,9 @@ export default function AdminPage() {
                 <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
                   {b.name} · {b.email}
                 </div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2, opacity: 0.7 }}>
+                  <span className="mono">{b.project_id}</span>
+                </div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
                 <span className="mono" style={{ fontSize: 12, fontWeight: 600 }}>{b.slot_date} · {b.slot_time}</span>
