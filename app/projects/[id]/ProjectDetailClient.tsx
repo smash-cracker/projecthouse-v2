@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { CATEGORIES } from "@/lib/data";
 
 const TABS = [
@@ -9,6 +9,7 @@ const TABS = [
   { id: "stack",      label: "Tech stack" },
   { id: "timeline",   label: "Timeline" },
   { id: "source",     label: "Source code" },
+  { id: "ask-ai",     label: "Ask AI" },
 ];
 
 const TIMELINE = [
@@ -126,9 +127,50 @@ export default function ProjectDetailClient({
   payment: { id: string; created_at: string; amount: number; razorpay_payment_id: string };
 }) {
   const [tab, setTab] = useState("overview");
+  const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatBottomRef = useRef<HTMLDivElement>(null);
   const cat = CATEGORIES.find((c) => c.id === p.cat);
   const ab = p.abstract || { objective: p.description, methodology: "", results: "", keywords: p.stack?.join(", ") ?? "" };
   const paidDate = new Date(payment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  async function sendChat() {
+    const text = chatInput.trim();
+    if (!text || chatLoading) return;
+    const contextPrefix = chatMessages.length === 0
+      ? `[Project context: "${p.title}" — ${p.description}]\n\n`
+      : "";
+    const userMsg = { role: "user" as const, content: contextPrefix + text };
+    const next = [...chatMessages, userMsg];
+    setChatMessages(next);
+    setChatInput("");
+    setChatLoading(true);
+    const placeholder = { role: "assistant" as const, content: "" };
+    setChatMessages([...next, placeholder]);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: next }),
+      });
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let full = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        full += decoder.decode(value, { stream: true });
+        setChatMessages([...next, { role: "assistant", content: full }]);
+      }
+    } finally {
+      setChatLoading(false);
+    }
+  }
 
   const extractYouTubeID = (url?: string) => {
     if (!url) return null;
@@ -223,14 +265,13 @@ export default function ProjectDetailClient({
                   color: tab === id ? "var(--ink)" : "#10B981",
                   fontWeight: 600,
                 } : {}),
+                ...(id === "ask-ai" ? {
+                  color: tab === id ? "var(--ink)" : "#8B5CF6",
+                  fontWeight: 600,
+                } : {}),
               }}
             >
               {label}
-              {id === "source" && (
-                <span style={{ marginLeft: 6, fontSize: 10, padding: "2px 6px", borderRadius: 999, background: "#D1FAE5", color: "#065F46", verticalAlign: "middle" }}>
-                  NEW
-                </span>
-              )}
             </button>
           ))}
         </div>
@@ -424,6 +465,77 @@ export default function ProjectDetailClient({
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {/* Ask AI */}
+          {tab === "ask-ai" && (
+            <div style={{ display: "flex", flexDirection: "column", height: 520 }}>
+              <div style={{
+                flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12,
+                padding: "4px 0 16px",
+              }}>
+                {chatMessages.length === 0 && (
+                  <div style={{
+                    flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    gap: 12, color: "var(--muted)", textAlign: "center", padding: "40px 24px",
+                  }}>
+                    <div style={{ fontSize: 32 }}>✦</div>
+                    <div style={{ fontSize: 15, fontWeight: 500, color: "var(--ink)" }}>Ask anything about this project</div>
+                    <div style={{ fontSize: 13, maxWidth: 360, lineHeight: 1.6 }}>
+                      Get help understanding the code, methodology, viva questions, or how to extend the project.
+                    </div>
+                  </div>
+                )}
+                {chatMessages.map((m, i) => (
+                  <div key={i} style={{
+                    display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start",
+                  }}>
+                    <div style={{
+                      maxWidth: "78%", padding: "12px 16px", borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                      background: m.role === "user" ? (p.color ?? "var(--ink)") : "var(--card)",
+                      color: m.role === "user" ? "#fff" : "var(--ink)",
+                      border: m.role === "user" ? "none" : "1px solid var(--line)",
+                      fontSize: 14, lineHeight: 1.65, whiteSpace: "pre-wrap",
+                    }}>
+                      {m.role === "user"
+                        ? m.content.replace(/^\[Project context:[^\]]+\]\n\n/, "")
+                        : m.content || <span style={{ opacity: 0.4 }}>▌</span>}
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatBottomRef} />
+              </div>
+              <div style={{
+                display: "flex", gap: 10, borderTop: "1px solid var(--line)", paddingTop: 16,
+              }}>
+                <input
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendChat()}
+                  placeholder="Ask about the code, methodology, viva prep…"
+                  disabled={chatLoading}
+                  style={{
+                    flex: 1, padding: "12px 16px", borderRadius: 999,
+                    border: "1px solid var(--line)", background: "var(--card)",
+                    color: "var(--ink)", fontFamily: "inherit", fontSize: 14,
+                    outline: "none",
+                  }}
+                />
+                <button
+                  onClick={sendChat}
+                  disabled={!chatInput.trim() || chatLoading}
+                  style={{
+                    padding: "12px 20px", borderRadius: 999, border: "none",
+                    background: p.color ?? "var(--ink)", color: "#fff",
+                    fontFamily: "inherit", fontSize: 14, fontWeight: 600,
+                    cursor: chatInput.trim() && !chatLoading ? "pointer" : "not-allowed",
+                    opacity: chatInput.trim() && !chatLoading ? 1 : 0.5,
+                  }}
+                >
+                  {chatLoading ? "…" : "Send"}
+                </button>
+              </div>
             </div>
           )}
 
