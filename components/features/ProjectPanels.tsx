@@ -186,6 +186,12 @@ export function AbstractPanel({ p }: { p: any }) {
 
 // ─── Tech Stack ────────────────────────────────────────────────────────────
 
+function toArr(v: unknown): string[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v as string[];
+  return [String(v)];
+}
+
 export function StackPanel({ p, accent }: { p: any; accent: string }) {
   const s = p.stack_detail || {};
   const isModel = s.kind === "ml" || s.kind === "dl";
@@ -261,7 +267,7 @@ export function StackPanel({ p, accent }: { p: any; accent: string }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 18 }}>
           <MetricCard label="Platform" value={s.kind === "web" ? "Web" : "Mobile"} sub={s.kind === "web" ? "Responsive, PWA-ready" : "iOS + Android"} />
           <MetricCard label="Architecture" value={s.kind === "web" ? "Full-stack" : "Cross-platform"} sub={p.stack.join(" · ")} tone="accent" />
-          <MetricCard label="Auth" value={(s.auth && s.auth[0]) || "JWT"} sub={s.auth ? s.auth.join(" · ") : "Standard auth flow"} />
+          <MetricCard label="Auth" value={toArr(s.auth)[0] || "JWT"} sub={s.auth ? toArr(s.auth).join(" · ") : "Standard auth flow"} />
         </div>
       )}
 
@@ -275,23 +281,11 @@ export function StackPanel({ p, accent }: { p: any; accent: string }) {
           </>
         )}
         {s.model && <Row icon={ic.brain} label="Model" items={[s.model]} tone="accent" />}
-        {s.frontend && <Row icon={ic.frontend} label="Frontend" items={s.frontend} />}
-        {s.backend && <Row icon={ic.backend} label="Backend" items={s.backend} />}
-        {s.db && <Row icon={ic.db} label="Database" items={s.db} />}
-        {s.auth && <Row icon={ic.lock} label="Auth" items={s.auth} />}
-        {s.deploy && (
-          <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: 20, padding: "16px 0", alignItems: "start" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ width: 28, height: 28, borderRadius: 8, background: "var(--paper-2)", display: "grid", placeItems: "center" }}>
-                {ic.cloud}
-              </span>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>Deploy</span>
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {s.deploy.map((x: string, i: number) => <Pill key={i}>{x}</Pill>)}
-            </div>
-          </div>
-        )}
+        {s.frontend && <Row icon={ic.frontend} label="Frontend" items={toArr(s.frontend)} />}
+        {s.backend && <Row icon={ic.backend} label="Backend" items={toArr(s.backend)} />}
+        {s.db && <Row icon={ic.db} label="Database" items={toArr(s.db)} />}
+        {s.auth && <Row icon={ic.lock} label="Auth" items={toArr(s.auth)} />}
+        {s.deploy && <Row icon={ic.cloud} label="Deploy" items={toArr(s.deploy)} />}
       </div>
     </div>
   );
