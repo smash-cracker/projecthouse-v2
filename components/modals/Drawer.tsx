@@ -405,7 +405,7 @@ export function Drawer() {
   const isMobile = useIsMobile();
 
   const p_includes: { name: string; price: number }[] = (project as any)?.includes ?? [];
-  const toggleAddon = (idx: number) => setSel((s) => ({ ...s, [idx]: !s[idx] }));
+  const toggleAddon = (idx: number) => setSel((s) => ({ ...s, [idx]: s[idx] !== false ? false : true }));
   const customTotal = p_includes.reduce((sum, item, idx) => sel[idx] !== false ? sum + item.price : sum, 0);
   const fullTotal = p_includes.reduce((sum, item) => sum + item.price, 0);
   const selCount = p_includes.filter((_, idx) => sel[idx] !== false).length;
@@ -553,30 +553,39 @@ export function Drawer() {
           <div style={{ marginTop: 24, minHeight: 220 }}>
             {tab === "overview" && (
               <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
-                {(p.includes ?? []).map((item: { name: string; price: number }, i: number) => (
-                  <li
-                    key={i}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 12, fontSize: 14,
-                      padding: "14px 16px", background: "var(--card)",
-                      border: "1px solid var(--line)", borderRadius: 10,
-                    }}
-                  >
-                    <span style={{
-                      width: 20, height: 20, borderRadius: "50%",
-                      background: accent,
-                      display: "grid", placeItems: "center", flexShrink: 0,
-                    }}>
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4l3 3 5-6" stroke="var(--accent-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </span>
-                    <span style={{ flex: 1 }}>{item.name}</span>
-                    <span style={{ fontSize: 12, color: "var(--muted)", flexShrink: 0 }}>
-                      {item.price > 0 ? `₹${item.price.toLocaleString("en-IN")}` : "Bundled"}
-                    </span>
-                  </li>
-                ))}
+                {(p.includes ?? []).map((item: { name: string; price: number }, i: number) => {
+                  const checked = sel[i] !== false;
+                  return (
+                    <li
+                      key={i}
+                      onClick={() => toggleAddon(i)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 12, fontSize: 14,
+                        padding: "14px 16px", background: checked ? "var(--card)" : "var(--paper-2)",
+                        border: `1px solid ${checked ? "var(--ink)" : "var(--line)"}`, borderRadius: 10,
+                        cursor: "pointer", opacity: checked ? 1 : 0.5,
+                        transition: "opacity .15s, border-color .15s, background .15s",
+                      }}
+                    >
+                      <span style={{
+                        width: 20, height: 20, borderRadius: "50%",
+                        background: checked ? accent : "var(--line)",
+                        display: "grid", placeItems: "center", flexShrink: 0,
+                        transition: "background .15s",
+                      }}>
+                        {checked && (
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                            <path d="M1 4l3 3 5-6" stroke="var(--accent-ink)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                      <span style={{ flex: 1 }}>{item.name}</span>
+                      <span style={{ fontSize: 12, color: "var(--muted)", flexShrink: 0 }}>
+                        {item.price > 0 ? `₹${item.price.toLocaleString("en-IN")}` : "Bundled"}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             )}
             {tab === "abstract" && <AbstractPanel p={p} />}
