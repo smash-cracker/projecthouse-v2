@@ -61,7 +61,7 @@ const BUNDLES = [
 ];
 
 async function seed() {
-  console.log("🗑  Clearing existing bundles...");
+  console.log("  Clearing existing bundles...");
   // Use a condition that is always true but matches something likely to exist, or just use delete everything
   const { error: delErr } = await supabase.from("bundles").delete().neq("id", "___never___");
   if (delErr) { 

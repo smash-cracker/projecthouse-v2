@@ -78,7 +78,7 @@ const VIVA_QA = {
 };
 
 async function seed() {
-  console.log("🗑  Clearing existing viva_qa rows...");
+  console.log("  Clearing existing viva_qa rows...");
   const { error: delErr } = await supabase.from("viva_qa").delete().neq("id", "00000000-0000-0000-0000-000000000000");
   if (delErr) { console.error("Delete failed:", delErr.message); process.exit(1); }
 

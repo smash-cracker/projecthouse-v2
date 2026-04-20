@@ -303,7 +303,7 @@ export default function AdminPage() {
     setDeleting(id);
     const { error } = await supabase.from("projects").delete().eq("id", id);
     if (error) showToast("" + error.message, false);
-    else { showToast("🗑 Project deleted"); fetchProjects(); }
+    else { showToast(" Project deleted"); fetchProjects(); }
     setDeleting(null);
   }
 
@@ -391,7 +391,7 @@ export default function AdminPage() {
     setDeletingBundle(id);
     const { error } = await supabase.from("bundles").delete().eq("id", id);
     if (error) showToast("" + error.message, false);
-    else { showToast("🗑 Bundle deleted"); fetchBundles(); }
+    else { showToast(" Bundle deleted"); fetchBundles(); }
     setDeletingBundle(null);
   }
 

@@ -179,7 +179,7 @@ const PROJECTS = [
 ];
 
 async function seed() {
-  console.log("🗑  Clearing existing projects...");
+  console.log("  Clearing existing projects...");
   const { error: delErr } = await supabase.from("projects").delete().neq("id", "___never___");
   if (delErr) { console.error("Delete failed:", delErr.message); process.exit(1); }
 
