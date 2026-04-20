@@ -66,6 +66,9 @@ export default function RazorpayButton({
       const { order, error } = await res.json();
       if (error) throw new Error(error);
 
+      // Guard against mobile firing payment.failed after handler already succeeded
+      let handlerSucceeded = false;
+
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
@@ -92,6 +95,7 @@ export default function RazorpayButton({
           });
           const verifyData = await verifyRes.json();
           if (verifyData.verified) {
+            handlerSucceeded = true;
             onSuccess?.(verifyData.payment_id, response.razorpay_order_id);
           } else {
             onFailure?.(new Error(verifyData.error ?? "Signature verification failed"));
@@ -104,7 +108,9 @@ export default function RazorpayButton({
 
       const rzp = new window.Razorpay(options);
       rzp.on("payment.failed", (res: { error: unknown }) => {
-        onFailure?.(res.error);
+        if (!handlerSucceeded) {
+          onFailure?.(res.error);
+        }
         setLoading(false);
       });
       rzp.open();
