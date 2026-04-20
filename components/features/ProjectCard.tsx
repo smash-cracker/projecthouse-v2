@@ -279,7 +279,7 @@ export function ProjectCard({
         flexDirection: "column",
       }}
     >
-      <div style={{ position: "relative", height: featured ? 240 : 180, background: p.color, overflow: "hidden" }}>
+      <div style={{ position: "relative", height: 220, background: p.color, overflow: "hidden" }}>
         <CardArt project={p} accent={accent} hover={hover} />
         <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6 }}>
           <span
