@@ -7,6 +7,7 @@ import { ArrowUpRight, Star } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 import { DemoModal } from "./DemoModal";
+import RazorpayButton from "../ui/RazorpayButton";
 import { jsPDF } from "jspdf";
 import JSZip from "jszip";
 
@@ -660,11 +661,19 @@ export function Drawer() {
               </svg>
               {p.cat === "mob" ? "Get demo APK" : "Book 1-hour demo"}
             </button>
-            <button
+            <RazorpayButton
+              amount={(customTotal || (p as any).price) * 100}
+              name="Project House"
+              description={(p as any).title}
+              onSuccess={(paymentId) => {
+                alert(`Payment successful! ID: ${paymentId}`);
+                setOpenedProject(null);
+              }}
+              onFailure={(err) => alert(`Payment failed: ${(err as any)?.description ?? "Unknown error"}`)}
               style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center" }}
             >
               Get this project <ArrowUpRight />
-            </button>
+            </RazorpayButton>
           </div>
         </div>
       </aside>

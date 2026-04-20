@@ -22,6 +22,7 @@ interface RazorpayButtonProps {
   onFailure?: (error: unknown) => void;
   children?: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export default function RazorpayButton({
@@ -34,6 +35,7 @@ export default function RazorpayButton({
   onFailure,
   children = "Pay Now",
   className,
+  style,
 }: RazorpayButtonProps) {
   const [loading, setLoading] = useState(false);
   const scriptLoaded = useRef(false);
@@ -108,6 +110,7 @@ export default function RazorpayButton({
       onClick={handleClick}
       disabled={loading}
       className={className}
+      style={style}
     >
       {loading ? "Processing…" : children}
     </button>
