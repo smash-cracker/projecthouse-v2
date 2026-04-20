@@ -7,6 +7,7 @@ import { ArrowUpRight, Star } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 import { DemoModal } from "./DemoModal";
+import { PaymentSuccessModal } from "./PaymentSuccessModal";
 import RazorpayButton from "../ui/RazorpayButton";
 import { jsPDF } from "jspdf";
 import JSZip from "jszip";
@@ -402,6 +403,7 @@ export function Drawer() {
   const { openedProject: project, setOpenedProject, accent } = useProjectHouse();
   const [tab, setTab] = useState("overview");
   const [demoOpen, setDemoOpen] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState<{ paymentId: string; amount: number } | null>(null);
   const [sel, setSel] = useState<Record<number, boolean>>({});
   const isMobile = useIsMobile();
 
@@ -666,8 +668,7 @@ export function Drawer() {
               name="Project House"
               description={(p as any).title}
               onSuccess={(paymentId) => {
-                alert(`Payment successful! ID: ${paymentId}`);
-                setOpenedProject(null);
+                setPaymentSuccess({ paymentId, amount: (customTotal || (p as any).price) * 100 });
               }}
               onFailure={(err) => alert(`Payment failed: ${(err as any)?.description ?? "Unknown error"}`)}
               style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center" }}
@@ -678,6 +679,15 @@ export function Drawer() {
         </div>
       </aside>
       {demoOpen && <DemoModal project={p} onClose={() => setDemoOpen(false)} accent={accent} />}
+      {paymentSuccess && (
+        <PaymentSuccessModal
+          projectTitle={(p as any).title}
+          paymentId={paymentSuccess.paymentId}
+          amount={paymentSuccess.amount}
+          accent={accent}
+          onClose={() => { setPaymentSuccess(null); setOpenedProject(null); }}
+        />
+      )}
     </div>
   );
 }
