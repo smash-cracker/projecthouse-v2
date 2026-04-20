@@ -29,7 +29,7 @@ export function Nav() {
     if (!isMobile) setMobileNavOpen(false);
   }, [isMobile]);
 
-  const NAV_LINKS = ["Catalog", "Categories", "Pricing", "Contact", "Guides"];
+  const NAV_LINKS = ["Catalog", "Categories", "Pricing", "Contact"];
 
   return (
     <div style={{ position: "sticky", top: 0, zIndex: 50 }}>
@@ -217,7 +217,7 @@ export function Nav() {
                             Admin Dashboard
                           </a>
                         )}
-                        {([["My projects", "/my-projects"], ["Favorites", "/favorites"]] as const).map(([label, href]) => (
+                        {([["My projects", "/my-projects"]] as const).map(([label, href]) => (
                           <a key={label} href={href} style={{ display: "block", padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
                             {label}
                           </a>
@@ -338,7 +338,7 @@ export function Nav() {
                       Admin Dashboard
                     </a>
                   )}
-                  {([["My projects", "/my-projects"], ["Favorites", "/favorites"]] as const).map(([label, href]) => (
+                  {([["My projects", "/my-projects"]] as const).map(([label, href]) => (
                     <a
                       key={label}
                       href={href}
