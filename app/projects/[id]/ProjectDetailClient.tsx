@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { CATEGORIES } from "@/lib/data";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useProjectHouse } from "@/components/providers/ThemeProvider";
+import { AbstractPanel, StackPanel } from "@/components/features/ProjectPanels";
 
 const TABS = [
   { id: "overview",    label: "What you get" },
@@ -639,61 +640,9 @@ export default function ProjectDetailClient({
           )}
 
           {/* Abstract */}
-          {tab === "abstract" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-              {[
-                ["Objective", ab.objective],
-                ["Methodology", ab.methodology],
-                ["Results", ab.results],
-              ].filter(([, v]) => v).map(([heading, body]) => (
-                <div key={heading as string} style={{ padding: "20px 24px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, borderLeft: `3px solid ${accent}` }}>
-                  <h3 className="mono" style={{ fontSize: 11, color: accent, letterSpacing: ".14em", textTransform: "uppercase", margin: "0 0 10px" }}>
-                    {heading}
-                  </h3>
-                  <p style={{ fontSize: 15, lineHeight: 1.7, margin: 0, color: "var(--ink)" }}>{body}</p>
-                </div>
-              ))}
-              {ab.keywords && (
-                <div>
-                  <h3 className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", margin: "0 0 10px" }}>
-                    Keywords
-                  </h3>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {ab.keywords.split(",").map((kw: string) => (
-                      <Pill key={kw}>{kw.trim()}</Pill>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {tab === "abstract" && <AbstractPanel p={p} />}
 
-          {/* Tech stack */}
-          {tab === "stack" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              {p.stack_detail?.layers ? (
-                p.stack_detail.layers.map((layer: { name: string; items: string[] }) => (
-                  <div key={layer.name}>
-                    <div className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 10 }}>
-                      {layer.name}
-                    </div>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      {layer.items.map((item: string) => <Pill key={item} color={accent}>{item}</Pill>)}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div>
-                  <div className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 12 }}>
-                    Full stack
-                  </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {(p.stack ?? []).map((s: string) => <Pill key={s} color={accent}>{s}</Pill>)}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {tab === "stack" && <StackPanel p={p} accent={accent} />}
 
           {/* Timeline */}
           {tab === "timeline" && (
