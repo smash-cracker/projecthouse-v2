@@ -17,7 +17,7 @@ try {
     if (key && rest.length) env[key.trim()] = rest.join("=").trim();
   }
 } catch {
-  console.error("❌  Could not read .env.local");
+  console.error(" Could not read .env.local");
   process.exit(1);
 }
 
@@ -25,7 +25,7 @@ const url = env["NEXT_PUBLIC_SUPABASE_URL"];
 const serviceKey = env["SUPABASE_SERVICE_ROLE_KEY"];
 
 if (!url || !serviceKey) {
-  console.error("❌  Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local");
+  console.error(" Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local");
   process.exit(1);
 }
 
@@ -36,7 +36,7 @@ const supabase = createClient(url, serviceKey, {
 const userId = process.argv[2];
 
 if (!userId) {
-  console.error("❌  Usage: node scripts/make-admin.mjs <user-uuid>");
+  console.error(" Usage: node scripts/make-admin.mjs <user-uuid>");
   process.exit(1);
 }
 
@@ -45,7 +45,7 @@ const { data, error } = await supabase.auth.admin.updateUserById(userId, {
 });
 
 if (error) {
-  console.error("❌  Error:", error.message);
+  console.error(" Error:", error.message);
   process.exit(1);
 }
 

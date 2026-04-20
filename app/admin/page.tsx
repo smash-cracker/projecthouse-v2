@@ -162,7 +162,7 @@ export default function AdminPage() {
   async function handleCancelBooking(id: string) {
     setCancellingBooking(id);
     const { error } = await supabase.from("demo_bookings").update({ status: "cancelled" }).eq("id", id);
-    if (error) showToast("❌ " + error.message, false);
+    if (error) showToast("" + error.message, false);
     else { showToast("Booking cancelled"); fetchBookings(); }
     setCancellingBooking(null);
   }
@@ -223,7 +223,7 @@ export default function AdminPage() {
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     if (includeItems.some((i) => !i.name.trim())) {
-      showToast("❌ All include items need a name", false);
+      showToast("All include items need a name", false);
       return;
     }
     setSaving(true);
@@ -247,7 +247,7 @@ export default function AdminPage() {
       setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? []));
       fetchProjects();
     } catch (err: any) {
-      showToast("❌ " + (err.message ?? "Something went wrong"), false);
+      showToast("" + (err.message ?? "Something went wrong"), false);
     } finally {
       setSaving(false);
     }
@@ -257,7 +257,7 @@ export default function AdminPage() {
     e.preventDefault();
     if (!editProject) return;
     if (includeItems.some((i) => !i.name.trim())) {
-      showToast("❌ All include items need a name", false); return;
+      showToast("All include items need a name", false); return;
     }
     setSaving(true);
     try {
@@ -280,7 +280,7 @@ export default function AdminPage() {
       setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? []));
       fetchProjects();
     } catch (err: any) {
-      showToast("❌ " + (err.message ?? "Something went wrong"), false);
+      showToast("" + (err.message ?? "Something went wrong"), false);
     } finally {
       setSaving(false);
     }
@@ -302,7 +302,7 @@ export default function AdminPage() {
   async function handleDelete(id: string) {
     setDeleting(id);
     const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (error) showToast("❌ " + error.message, false);
+    if (error) showToast("" + error.message, false);
     else { showToast("🗑 Project deleted"); fetchProjects(); }
     setDeleting(null);
   }
@@ -353,7 +353,7 @@ export default function AdminPage() {
       setAddBundleOpen(false);
       fetchBundles();
     } catch (err: any) {
-      showToast("❌ " + (err.message ?? "Something went wrong"), false);
+      showToast("" + (err.message ?? "Something went wrong"), false);
     } finally {
       setSavingBundle(false);
     }
@@ -381,7 +381,7 @@ export default function AdminPage() {
       resetBundleForm();
       fetchBundles();
     } catch (err: any) {
-      showToast("❌ " + (err.message ?? "Something went wrong"), false);
+      showToast("" + (err.message ?? "Something went wrong"), false);
     } finally {
       setSavingBundle(false);
     }
@@ -390,7 +390,7 @@ export default function AdminPage() {
   async function handleDeleteBundle(id: string) {
     setDeletingBundle(id);
     const { error } = await supabase.from("bundles").delete().eq("id", id);
-    if (error) showToast("❌ " + error.message, false);
+    if (error) showToast("" + error.message, false);
     else { showToast("🗑 Bundle deleted"); fetchBundles(); }
     setDeletingBundle(null);
   }
@@ -417,7 +417,7 @@ export default function AdminPage() {
     try {
       localStorage.setItem("admin_cat_templates", JSON.stringify(templates));
       showToast(" Templates saved!");
-    } catch { showToast("❌ Failed to save", false); }
+    } catch { showToast("Failed to save", false); }
     finally { setSavingTemplates(false); }
   }
 
@@ -444,7 +444,7 @@ export default function AdminPage() {
 
   async function saveEdit() {
     if (!editForm.question.trim() || !editForm.answer.trim()) {
-      showToast("❌ Question and answer are required", false); return;
+      showToast("Question and answer are required", false); return;
     }
     setSavingViva(true);
     const { error } = await supabase
@@ -452,7 +452,7 @@ export default function AdminPage() {
       .update({ question: editForm.question, answer: editForm.answer })
       .eq("id", editingId);
     setSavingViva(false);
-    if (error) { showToast("❌ " + error.message, false); return; }
+    if (error) { showToast("" + error.message, false); return; }
     setEditingId(null);
     showToast("Question updated!");
     fetchViva();
@@ -460,14 +460,14 @@ export default function AdminPage() {
 
   async function deleteQA(id: string) {
     const { error } = await supabase.from("viva_qa").delete().eq("id", id);
-    if (error) { showToast("❌ " + error.message, false); return; }
+    if (error) { showToast("" + error.message, false); return; }
     showToast("Question deleted");
     fetchViva();
   }
 
   async function saveAdd() {
     if (!addForm.question.trim() || !addForm.answer.trim()) {
-      showToast("❌ Question and answer are required", false); return;
+      showToast("Question and answer are required", false); return;
     }
     setSavingViva(true);
     const { error } = await supabase.from("viva_qa").insert({
@@ -477,7 +477,7 @@ export default function AdminPage() {
       order_index: vivaRows.length,
     });
     setSavingViva(false);
-    if (error) { showToast("❌ " + error.message, false); return; }
+    if (error) { showToast("" + error.message, false); return; }
     setAddForm({ question: "", answer: "" });
     setAddingNew(false);
     showToast(" Question added!");
