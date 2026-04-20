@@ -50,7 +50,9 @@ const EMPTY_FORM = {
   desc: "", files: "", pages: "", youtubeLink: "",
 };
 
-type Project = { id: string; title: string; tag: string; cat: string; price: number; level: string; color: string; stack: string[]; rating: number; downloads: number; description: string; files: number; pages: number; includes: {name:string;price:number}[]; youtube_link: string | null; created_at: string };
+type StackDetailRow = { key: string; value: string };
+
+type Project = { id: string; title: string; tag: string; cat: string; price: number; level: string; color: string; stack: string[]; rating: number; downloads: number; description: string; files: number; pages: number; includes: {name:string;price:number}[]; youtube_link: string | null; stack_detail: Record<string, unknown> | null; created_at: string };
 
 function templateToItems(names: string[]): IncludeItem[] {
   return names.map((name) => ({ name, price: "0" }));
@@ -102,6 +104,7 @@ export default function AdminPage() {
   // Add / edit project dialogs
   const [addProjectOpen, setAddProjectOpen] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
+  const [stackDetailRows, setStackDetailRows] = useState<StackDetailRow[]>([]);
 
   // Bundles state
   const [bundles, setBundles] = useState<Bundle[]>([]);
@@ -259,6 +262,15 @@ export default function AdminPage() {
     if (includeItems.some((i) => !i.name.trim())) {
       showToast("All include items need a name", false); return;
     }
+    const filledRows = stackDetailRows.filter(r => r.key.trim());
+    const parsedStackDetail: Record<string, unknown> | null = filledRows.length > 0
+      ? Object.fromEntries(filledRows.map(({ key, value }) => [
+          key.trim(),
+          value.includes(" | ")
+            ? value.split(" | ").map(s => s.trim()).filter(Boolean)
+            : value.trim(),
+        ]))
+      : null;
     setSaving(true);
     try {
       const payload = {
@@ -271,6 +283,7 @@ export default function AdminPage() {
         files: parseInt(form.files) || 0, pages: parseInt(form.pages) || 0,
         includes: includeItems.map((i) => ({ name: i.name.trim(), price: parseInt(i.price) || 0 })),
         youtube_link: form.youtubeLink || null,
+        stack_detail: parsedStackDetail,
       };
       const { error } = await supabase.from("projects").update(payload).eq("id", editProject.id);
       if (error) throw error;
@@ -278,6 +291,7 @@ export default function AdminPage() {
       setEditProject(null);
       setForm(EMPTY_FORM);
       setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? []));
+      setStackDetailRows([]);
       fetchProjects();
     } catch (err: any) {
       showToast("" + (err.message ?? "Something went wrong"), false);
@@ -295,6 +309,14 @@ export default function AdminPage() {
       files: String(p.files), pages: String(p.pages),
       youtubeLink: p.youtube_link ?? "",
     });
+    setStackDetailRows(
+      p.stack_detail
+        ? Object.entries(p.stack_detail).map(([key, val]) => ({
+            key,
+            value: Array.isArray(val) ? (val as string[]).join(" | ") : String(val ?? ""),
+          }))
+        : []
+    );
     setIncludeItems(p.includes.map(i => ({ name: i.name, price: String(i.price) })));
     setEditProject(p);
   }
@@ -669,7 +691,7 @@ export default function AdminPage() {
         </button>
         <div style={{ fontSize: 15, fontWeight: 700 }}>Edit Project <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 400, marginLeft: 6 }}>{editProject.id}</span></div>
       </div>
-      <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: "36px 32px", maxWidth: 780, width: "100%", margin: "0 auto" }}>
+      <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: "36px 32px" }}>
         <form onSubmit={handleUpdate} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div><label style={labelStyle}>Title *</label><input required style={inputStyle} value={form.title} onChange={e => field("title", e.target.value)} /></div>
@@ -755,12 +777,38 @@ export default function AdminPage() {
             </div>
             <div><label style={labelStyle}>YouTube Link</label><input style={inputStyle} value={form.youtubeLink} onChange={e => field("youtubeLink", e.target.value)} placeholder="https://youtu.be/..." /></div>
           </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>Stack Detail</label>
+              <span style={{ fontSize: 11, color: "var(--muted)" }}>use <code style={{ fontFamily: "monospace" }}> | </code> to separate array values</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "160px 1fr 30px", gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, paddingLeft: 2 }}>Key</span>
+              <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, paddingLeft: 2 }}>Value</span>
+              <span />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {stackDetailRows.map((row, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "160px 1fr 30px", gap: 8 }}>
+                  <input style={{ ...inputStyle, fontSize: 13 }} value={row.key} onChange={e => setStackDetailRows(p => p.map((r, idx) => idx === i ? { ...r, key: e.target.value } : r))} placeholder="e.g. algorithm" />
+                  <input style={{ ...inputStyle, fontSize: 13 }} value={row.value} onChange={e => setStackDetailRows(p => p.map((r, idx) => idx === i ? { ...r, value: e.target.value } : r))} placeholder="e.g. XGBoost | RandomForest" />
+                  <button type="button" onClick={() => setStackDetailRows(p => p.filter((_, idx) => idx !== i))} style={iconBtn}>
+                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button type="button" onClick={() => setStackDetailRows(p => [...p, { key: "", value: "" }])}
+              style={{ marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px dashed var(--line)", background: "transparent", color: "var(--muted)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>
+              + Add row
+            </button>
+          </div>
           <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
             <button type="submit" disabled={saving}
               style={{ padding: "14px 28px", borderRadius: 12, border: "none", background: saving ? "var(--muted)" : accent, color: "var(--accent-ink)", fontSize: 15, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
               {saving ? "Saving..." : "Save Changes"}
             </button>
-            <button type="button" onClick={() => { setEditProject(null); setForm(EMPTY_FORM); setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? [])); }}
+            <button type="button" onClick={() => { setEditProject(null); setForm(EMPTY_FORM); setIncludeItems(templateToItems(templates[EMPTY_FORM.cat] ?? [])); setStackDetailRows([]); }}
               style={{ padding: "14px 20px", borderRadius: 12, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
               Cancel
             </button>
