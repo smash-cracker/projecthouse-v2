@@ -99,6 +99,10 @@ export function PaymentSuccessModal({ projectTitle, paymentId, amount, accent, o
           {paymentId}
         </div>
 
+        <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 20px", lineHeight: 1.5 }}>
+          Please take a screenshot of this page for your records.
+        </p>
+
         <button
           onClick={onClose}
           style={{
