@@ -20,20 +20,20 @@ const CATEGORIES = [
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 
 const COLORS = [
-  { label: "Indigo",     value: "#2A2FB8" },
-  { label: "Deep Navy",  value: "#0A0F2C" },
-  { label: "Dark Indigo",value: "#1A1F7A" },
-  { label: "Peach",      value: "#FF8A5C" },
+  { label: "Indigo", value: "#2A2FB8" },
+  { label: "Deep Navy", value: "#0A0F2C" },
+  { label: "Dark Indigo", value: "#1A1F7A" },
+  { label: "Peach", value: "#FF8A5C" },
   { label: "Steel Blue", value: "#1E3A5F" },
-  { label: "Forest",     value: "#1A4731" },
-  { label: "Crimson",    value: "#7B1D1D" },
-  { label: "Teal",       value: "#134E4A" },
+  { label: "Forest", value: "#1A4731" },
+  { label: "Crimson", value: "#7B1D1D" },
+  { label: "Teal", value: "#134E4A" },
 ];
 
 const DEFAULT_TEMPLATES: Record<string, string[]> = {
-  ml:  ["Full source code", "Cleaned dataset", "Trained model (.pkl)", "Report (PDF)", "README"],
-  dl:  ["Full source code", "Jupyter notebook", "Pretrained weights", "Training history", "Report (PDF)"],
-  cv:  ["Full source code", "Jupyter notebook", "Sample images", "Pretrained model", "Report (PDF)"],
+  ml: ["Full source code", "Cleaned dataset", "Trained model (.pkl)", "Report (PDF)", "README"],
+  dl: ["Full source code", "Jupyter notebook", "Pretrained weights", "Training history", "Report (PDF)"],
+  cv: ["Full source code", "Jupyter notebook", "Sample images", "Pretrained model", "Report (PDF)"],
   web: ["Full source code", "Database schema", "Deployment guide", "README"],
   mob: ["Full source code", "APK file", "UI assets", "README"],
 };
@@ -118,7 +118,7 @@ export default function AdminPage() {
     try {
       const tmpl = localStorage.getItem("admin_cat_templates");
       if (tmpl) setTemplates({ ...DEFAULT_TEMPLATES, ...JSON.parse(tmpl) });
-    } catch {}
+    } catch { }
     return () => clearTimeout(t);
   }, []);
 
@@ -242,14 +242,14 @@ export default function AdminPage() {
     setSavingViva(false);
     if (error) { showToast("❌ " + error.message, false); return; }
     setEditingId(null);
-    showToast("✅ Question updated!");
+    showToast("Question updated!");
     fetchViva();
   }
 
   async function deleteQA(id: string) {
     const { error } = await supabase.from("viva_qa").delete().eq("id", id);
     if (error) { showToast("❌ " + error.message, false); return; }
-    showToast("🗑 Question deleted");
+    showToast("Question deleted");
     fetchViva();
   }
 
@@ -375,7 +375,7 @@ export default function AdminPage() {
                   <input style={{ ...inputStyle, fontSize: 13 }} value={item.name} onChange={e => setItem(i, { name: e.target.value })} placeholder="e.g. Jupyter notebook" />
                   <input type="number" min="0" style={{ ...inputStyle, fontSize: 13 }} value={item.price} onChange={e => setItem(i, { price: e.target.value })} placeholder="0" />
                   <button type="button" onClick={() => setIncludeItems(p => p.filter((_, idx) => idx !== i))} style={iconBtn} title="Remove">
-                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                    <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
                   </button>
                 </div>
               ))}
@@ -387,7 +387,7 @@ export default function AdminPage() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
-            {[["files","Files","38"],["pages","Pages","62"],["rating","Rating","4.9"],["downloads","Downloads","0"]].map(([k, lbl, ph]) => (
+            {[["files", "Files", "38"], ["pages", "Pages", "62"], ["rating", "Rating", "4.9"], ["downloads", "Downloads", "0"]].map(([k, lbl, ph]) => (
               <div key={k}>
                 <label style={labelStyle}>{lbl}</label>
                 <input type="number" step={k === "rating" ? "0.1" : "1"} min="0" max={k === "rating" ? "5" : undefined}
@@ -437,7 +437,7 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} style={iconBtn}>
-                  {deleting === p.id ? "…" : <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>}
+                  {deleting === p.id ? "…" : <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>}
                 </button>
               </div>
             ))}
@@ -465,7 +465,7 @@ export default function AdminPage() {
                       onChange={e => setTemplates(prev => ({ ...prev, [c.id]: prev[c.id].map((n, ni) => ni === i ? e.target.value : n) }))} />
                     <button type="button" style={{ ...iconBtn, width: "100%", height: 42 }}
                       onClick={() => setTemplates(prev => ({ ...prev, [c.id]: prev[c.id].filter((_, ni) => ni !== i) }))}>
-                      <svg width="9" height="9" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                      <svg width="9" height="9" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
                     </button>
                   </div>
                 ))}
@@ -588,10 +588,10 @@ export default function AdminPage() {
                     </div>
                     <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                       <button onClick={() => startEdit(qa)} style={{ ...iconBtn, color: accent, borderColor: accent }} title="Edit">
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /></svg>
                       </button>
                       <button onClick={() => deleteQA(qa.id)} style={iconBtn} title="Delete">
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
                       </button>
                     </div>
                   </div>
@@ -612,7 +612,7 @@ export default function AdminPage() {
       {/* Top header */}
       <div style={{ borderBottom: "1px solid var(--line)", padding: "0 28px", display: "flex", alignItems: "center", gap: 12, height: 61, background: "var(--card)", position: "sticky", top: 0, zIndex: 10, flexShrink: 0 }}>
         <a href="/" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 9, border: "1px solid var(--line)", background: "var(--paper-2)", textDecoration: "none", color: "var(--ink)" }}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L3 7l6 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L3 7l6 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </a>
         <div>
           <div style={{ fontSize: 15, fontWeight: 700 }}>Admin Dashboard</div>
@@ -632,27 +632,27 @@ export default function AdminPage() {
             label="Projects"
             active={section === "projects"}
             onClick={() => setSection("projects")}
-            icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4"/></svg>}
+            icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" /><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" /><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" /><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.4" /></svg>}
           />
           <NavLink
             label="Category Templates"
             active={section === "templates"}
             onClick={() => setSection("templates")}
-            icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="3" rx="1" stroke="currentColor" strokeWidth="1.4"/><rect x="1" y="6" width="7" height="3" rx="1" stroke="currentColor" strokeWidth="1.4"/><rect x="1" y="11" width="5" height="2" rx="1" stroke="currentColor" strokeWidth="1.4"/></svg>}
+            icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="3" rx="1" stroke="currentColor" strokeWidth="1.4" /><rect x="1" y="6" width="7" height="3" rx="1" stroke="currentColor" strokeWidth="1.4" /><rect x="1" y="11" width="5" height="2" rx="1" stroke="currentColor" strokeWidth="1.4" /></svg>}
           />
           <NavLink
             label="Viva Data"
             active={section === "viva"}
             onClick={() => setSection("viva")}
-            icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="3" stroke="currentColor" strokeWidth="1.4"/><path d="M2 13c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>}
+            icon={<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="3" stroke="currentColor" strokeWidth="1.4" /><path d="M2 13c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>}
           />
         </nav>
 
         {/* Main content */}
         <main style={{ flex: 1, overflowY: "auto", padding: "36px 32px" }}>
-          {section === "projects"  && ProjectsSection}
+          {section === "projects" && ProjectsSection}
           {section === "templates" && TemplatesSection}
-          {section === "viva"      && VivaSection}
+          {section === "viva" && VivaSection}
         </main>
       </div>
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
-import { CATEGORIES, STACKS, ABSTRACTS, ADD_ONS, ADD_ONS_INIT, ADD_ONS_FULL } from "@/lib/data";
+import { CATEGORIES, ADD_ONS, ADD_ONS_INIT, ADD_ONS_FULL } from "@/lib/data";
 import { ArrowUpRight, Star } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
@@ -11,7 +11,7 @@ import { jsPDF } from "jspdf";
 import JSZip from "jszip";
 
 function StackPanel({ p, accent }: { p: any; accent: string }) {
-  const s = STACKS[p.id] || {};
+  const s = p.stack_detail || {};
   const isModel = s.kind === "ml" || s.kind === "dl";
 
   const Pill = ({ children, tone = "default" }: { children: React.ReactNode; tone?: string }) => (
@@ -189,8 +189,8 @@ function StackPanel({ p, accent }: { p: any; accent: string }) {
 }
 
 function AbstractPanel({ p }: { p: any }) {
-  const ab = ABSTRACTS[p.id] || {
-    objective: p.desc,
+  const ab = p.abstract || {
+    objective: p.description,
     methodology: "Detailed methodology available in the full report included with purchase.",
     results: "Results documented in the final report.",
     keywords: p.stack.join(", "),
@@ -484,7 +484,7 @@ export function Drawer() {
             return (match && match[7].length === 11) ? match[7] : null;
           };
           
-          const youtubeID = extractYouTubeID(p.youtubeLink) || "XHTrLYShBRQ"; // Fallback demo video if link is missing
+          const youtubeID = extractYouTubeID(p.youtube_link) || "XHTrLYShBRQ"; // Fallback demo video if link is missing
 
           return (
             <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#000", overflow: "hidden" }}>
@@ -515,7 +515,7 @@ export function Drawer() {
           <h2 className="serif" style={{ fontSize: isMobile ? 30 : 48, lineHeight: 1.02, margin: 0, letterSpacing: "-.02em" }}>
             {p.title}
           </h2>
-          <p style={{ fontSize: 16, color: "var(--muted)", lineHeight: 1.6, marginTop: 14 }}>{p.desc}</p>
+          <p style={{ fontSize: 16, color: "var(--muted)", lineHeight: 1.6, marginTop: 14 }}>{p.description}</p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginTop: 24 }}>
             <Stat n={p.files} l="files" />

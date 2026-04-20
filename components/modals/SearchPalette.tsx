@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
-import { PROJECTS } from "@/lib/data";
-
 export function SearchPalette() {
-  const { searchOpen: open, setSearchOpen: onClose, setOpenedProject: onOpen } = useProjectHouse();
+  const { searchOpen: open, setSearchOpen: onClose, setOpenedProject: onOpen, projects } = useProjectHouse();
   const [q, setQ] = useState("");
 
   useEffect(() => {
@@ -20,8 +18,8 @@ export function SearchPalette() {
   if (!open) return null;
   const s = q.toLowerCase();
   const results = q
-    ? PROJECTS.filter((p) => (p.title + p.tag + p.stack.join(" ")).toLowerCase().includes(s)).slice(0, 6)
-    : PROJECTS.slice(0, 5);
+    ? projects.filter((p) => (p.title + p.tag + p.stack.join(" ")).toLowerCase().includes(s)).slice(0, 6)
+    : projects.slice(0, 5);
 
   return (
     <div

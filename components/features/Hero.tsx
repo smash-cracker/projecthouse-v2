@@ -3,7 +3,6 @@
 import React from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
 import { ArrowUpRight, Star } from "../ui/icons";
-import { PROJECTS } from "@/lib/data";
 
 function ThumbArt({ kind, accent, color }: { kind: string; accent: string; color: string }) {
   const bg = color && color !== "#FF8A5C" ? color : "var(--indigo-deep)";
@@ -166,6 +165,7 @@ function ThumbCollage({ thumbs, accent }: { thumbs: any[]; accent: string }) {
     <div style={{ position: "absolute", inset: 0 }}>
       {tiles.map((t) => {
         const p = thumbs[t.i];
+        if (!p) return null;
         return (
           <div
             key={t.i}
@@ -216,8 +216,8 @@ function ThumbCollage({ thumbs, accent }: { thumbs: any[]; accent: string }) {
 }
 
 export function Hero() {
-  const { accent } = useProjectHouse();
-  const thumbs = PROJECTS.slice(0, 6);
+  const { accent, projects } = useProjectHouse();
+  const thumbs = projects.slice(0, 6);
 
   return (
     <section style={{ position: "relative", overflow: "hidden" }}>

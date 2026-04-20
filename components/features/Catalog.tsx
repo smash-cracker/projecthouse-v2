@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
-import { CATEGORIES, PROJECTS } from "@/lib/data";
+import { CATEGORIES } from "@/lib/data";
 import { ProjectCard } from "./ProjectCard";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
@@ -99,14 +99,14 @@ function CustomSelect({ value, onChange, options }: { value: string; onChange: (
 }
 
 export function Catalog() {
-  const { accent, setOpenedProject } = useProjectHouse();
+  const { accent, setOpenedProject, projects } = useProjectHouse();
   const [cat, setCat] = useState("all");
   const [sort, setSort] = useState("popular");
   const [q, setQ] = useState("");
   const isMobile = useIsMobile();
 
   const filtered = useMemo(() => {
-    let xs = PROJECTS.filter((p) => cat === "all" || p.cat === cat);
+    let xs = projects.filter((p) => cat === "all" || p.cat === cat);
     if (q.trim()) {
       const s = q.toLowerCase();
       xs = xs.filter((p) =>
@@ -257,7 +257,7 @@ export function Catalog() {
                     color: active ? "var(--accent-ink)" : "var(--muted)",
                   }}
                 >
-                  {c.id === "all" ? PROJECTS.length : PROJECTS.filter((p) => p.cat === c.id).length}
+                  {c.id === "all" ? projects.length : projects.filter((p) => p.cat === c.id).length}
                 </span>
               </button>
             );

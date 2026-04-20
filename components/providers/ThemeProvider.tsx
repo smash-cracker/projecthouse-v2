@@ -19,6 +19,7 @@ interface ProjectHouseState {
   setDark: React.Dispatch<React.SetStateAction<boolean>>;
   accent: string;
   setAccent: (c: string) => void;
+  projects: any[];
   openedProject: any | null;
   setOpenedProject: React.Dispatch<React.SetStateAction<any | null>>;
   searchOpen: boolean;
@@ -68,6 +69,7 @@ function getClientCookie(name: string): string | undefined {
 export function ThemeProvider({ children, initialTheme }: { children: React.ReactNode; initialTheme?: string }) {
   const [dark, setDark] = useState(initialTheme === "dark");
   const [accent, setAccentState] = useState(TWEAK_DEFAULTS.accent);
+  const [projects, setProjects] = useState<any[]>([]);
   const [openedProject, setOpenedProject] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tweaksVisible, setTweaksVisible] = useState(false);
@@ -79,6 +81,12 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
   useEffect(() => {
     const saved = getClientCookie("ph-theme");
     if (saved) setDark(saved === "dark");
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.from("projects").select("*").order("created_at", { ascending: false })
+      .then(({ data }) => setProjects(data ?? []));
   }, []);
 
   useEffect(() => {
@@ -147,6 +155,7 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
         setDark,
         accent,
         setAccent,
+        projects,
         openedProject,
         setOpenedProject,
         searchOpen,
