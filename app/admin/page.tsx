@@ -48,7 +48,7 @@ const EMPTY_FORM = {
   desc: "", files: "", pages: "", youtubeLink: "",
 };
 
-type Project = { id: string; title: string; cat: string; price: number; level: string; created_at: string };
+type Project = { id: string; title: string; cat: string; price: number; level: string; color: string; created_at: string };
 
 function templateToItems(names: string[]): IncludeItem[] {
   return names.map((name) => ({ name, price: "0" }));
@@ -97,6 +97,9 @@ export default function AdminPage() {
   const [templates, setTemplates] = useState<Record<string, string[]>>(DEFAULT_TEMPLATES);
   const [savingTemplates, setSavingTemplates] = useState(false);
 
+  // Add project dialog
+  const [addProjectOpen, setAddProjectOpen] = useState(false);
+
   // Viva state
   const [vivaRows, setVivaRows] = useState<QA[]>([]);
   const [vivaTab, setVivaTab] = useState("ml");
@@ -128,7 +131,7 @@ export default function AdminPage() {
   async function fetchProjects() {
     const { data } = await supabase
       .from("projects")
-      .select("id, title, cat, price, level, created_at")
+      .select("id, title, cat, price, level, color, created_at")
       .order("created_at", { ascending: false });
     if (data) setProjects(data);
   }
@@ -303,13 +306,19 @@ export default function AdminPage() {
 
   // ─── Sections ────────────────────────────────────────────────────────────────
 
-  const ProjectsSection = (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 32, alignItems: "start" }}>
+  const AddProjectDialog = addProjectOpen && (
+    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "var(--paper)", display: "flex", flexDirection: "column" }}>
+      {/* Dialog header */}
+      <div style={{ borderBottom: "1px solid var(--line)", padding: "0 28px", height: 61, display: "flex", alignItems: "center", gap: 12, flexShrink: 0, background: "var(--card)" }}>
+        <button onClick={() => setAddProjectOpen(false)} style={{ ...iconBtn, width: 34, height: 34 }}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+        </button>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>Add New Project</div>
+      </div>
 
-      {/* Add form */}
-      <div style={card}>
-        <h2 style={{ margin: "0 0 28px", fontSize: 20, fontWeight: 700 }}>Add New Project</h2>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Dialog body */}
+      <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: "36px 32px", maxWidth: 780, width: "100%", margin: "0 auto" }}>
+        <form onSubmit={async (e) => { await handleSubmit(e); setAddProjectOpen(false); }} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div>
@@ -358,7 +367,6 @@ export default function AdminPage() {
             <input required style={inputStyle} value={form.stack} onChange={e => field("stack", e.target.value)} placeholder="Python, scikit-learn, XGBoost" />
           </div>
 
-          {/* Includes */}
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
               <label style={{ ...labelStyle, marginBottom: 0 }}>What's Included *</label>
@@ -412,38 +420,61 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <button type="submit" disabled={saving}
-            style={{ padding: "14px 24px", borderRadius: 12, border: "none", background: saving ? "var(--muted)" : accent, color: "var(--accent-ink)", fontSize: 15, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit", marginTop: 4 }}>
-            {saving ? "Saving..." : "Add Project"}
-          </button>
+          <div style={{ display: "flex", gap: 10, paddingTop: 8 }}>
+            <button type="submit" disabled={saving}
+              style={{ padding: "14px 28px", borderRadius: 12, border: "none", background: saving ? "var(--muted)" : accent, color: "var(--accent-ink)", fontSize: 15, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+              {saving ? "Saving..." : "Add Project"}
+            </button>
+            <button type="button" onClick={() => setAddProjectOpen(false)}
+              style={{ padding: "14px 20px", borderRadius: 12, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
+              Cancel
+            </button>
+          </div>
         </form>
       </div>
+    </div>
+  );
 
-      {/* Project list */}
-      <div style={{ ...card, padding: 24 }}>
-        <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>
-          Supabase Projects <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 400, marginLeft: 6 }}>({projects.length})</span>
-        </h3>
-        {projects.length === 0 ? (
-          <div style={{ color: "var(--muted)", fontSize: 13, padding: "20px 0", textAlign: "center" }}>No projects yet</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {projects.map(p => (
-              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, background: "var(--paper-2)", border: "1px solid var(--line)" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
-                    {CATEGORIES.find(c => c.id === p.cat)?.label} · ₹{p.price.toLocaleString("en-IN")} · {p.level}
-                  </div>
+  const ProjectsSection = (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Projects <span style={{ fontSize: 14, color: "var(--muted)", fontWeight: 400 }}>({projects.length})</span></h2>
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)" }}>All projects in Supabase.</p>
+        </div>
+        <button onClick={() => setAddProjectOpen(true)}
+          style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: accent, color: "var(--accent-ink)", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
+          + Add Project
+        </button>
+      </div>
+
+      {projects.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "60px 0", color: "var(--muted)", border: "1px dashed var(--line)", borderRadius: 16 }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>📦</div>
+          <div style={{ fontSize: 14, fontWeight: 500 }}>No projects yet</div>
+          <div style={{ fontSize: 12, marginTop: 4 }}>Click "Add Project" to get started.</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {projects.map(p => (
+            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, background: "var(--card)", border: "1px solid var(--line)" }}>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: p.color, flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                  {CATEGORIES.find(c => c.id === p.cat)?.label} · ₹{p.price.toLocaleString("en-IN")} · {p.level}
                 </div>
-                <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} style={iconBtn}>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                <span className="mono" style={{ fontSize: 10, padding: "3px 8px", borderRadius: 4, background: "var(--paper-2)", color: "var(--muted)" }}>{p.id}</span>
+                <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id} style={iconBtn} title="Delete">
                   {deleting === p.id ? "…" : <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>}
                 </button>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -656,6 +687,7 @@ export default function AdminPage() {
         </main>
       </div>
 
+      {AddProjectDialog}
     </div>
   );
 }
