@@ -157,6 +157,27 @@ export default function AdminPage() {
     setIncludeItems((prev) => prev.map((item, idx) => idx === i ? { ...item, ...patch } : item));
   }
 
+  function handleItemPriceChange(i: number, rawValue: string) {
+    const total = parseInt(form.price) || 0;
+    setIncludeItems((prev) => {
+      const updated = prev.map((item, idx) => idx === i ? { ...item, price: rawValue } : item);
+      const assignedSum = updated.reduce((sum, item, idx) =>
+        idx === i || parseInt(item.price) > 0 ? sum + (parseInt(item.price) || 0) : sum, 0);
+      const remaining = Math.max(0, total - assignedSum);
+      const freeIdxs = updated.reduce<number[]>((acc, item, idx) => {
+        if (idx !== i && (parseInt(item.price) || 0) === 0) acc.push(idx);
+        return acc;
+      }, []);
+      if (freeIdxs.length === 0 || remaining === 0) return updated;
+      const share = Math.floor(remaining / freeIdxs.length);
+      const extra = remaining - share * freeIdxs.length;
+      return updated.map((item, idx) => {
+        if (!freeIdxs.includes(idx)) return item;
+        return { ...item, price: String(share + (freeIdxs[0] === idx ? extra : 0)) };
+      });
+    });
+  }
+
   function generateId(title: string) {
     return "p" + title.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) + Date.now().toString().slice(-4);
   }
@@ -428,7 +449,7 @@ export default function AdminPage() {
               {includeItems.map((item, i) => (
                 <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 110px 30px", gap: 8 }}>
                   <input style={{ ...inputStyle, fontSize: 13 }} value={item.name} onChange={e => setItem(i, { name: e.target.value })} placeholder="e.g. Jupyter notebook" />
-                  <input type="number" min="0" style={{ ...inputStyle, fontSize: 13 }} value={item.price} onChange={e => setItem(i, { price: e.target.value })} placeholder="0" />
+                  <input type="number" min="0" style={{ ...inputStyle, fontSize: 13 }} value={item.price} onChange={e => handleItemPriceChange(i, e.target.value)} placeholder="0" />
                   <button type="button" onClick={() => setIncludeItems(p => p.filter((_, idx) => idx !== i))} style={iconBtn} title="Remove">
                     <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
                   </button>
@@ -439,6 +460,23 @@ export default function AdminPage() {
               style={{ marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px dashed var(--line)", background: "transparent", color: "var(--muted)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>
               + Add item
             </button>
+            {(() => {
+              const total = parseInt(form.price) || 0;
+              const assigned = includeItems.reduce((s, it) => s + (parseInt(it.price) || 0), 0);
+              const diff = total - assigned;
+              const over = diff < 0;
+              const exact = diff === 0 && total > 0;
+              return (
+                <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 10, background: over ? "#7B1D1D18" : exact ? "#14532D18" : "var(--paper-2)", border: `1px solid ${over ? "#7B1D1D44" : exact ? "#14532D44" : "var(--line)"}`, display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
+                  <span style={{ color: "var(--muted)" }}>
+                    {exact ? "✓ Adds up to project price" : over ? `₹${Math.abs(diff).toLocaleString("en-IN")} over project price` : `₹${Math.abs(diff).toLocaleString("en-IN")} unassigned`}
+                  </span>
+                  <span style={{ fontWeight: 700, color: over ? "#DC2626" : exact ? "#16A34A" : "var(--ink)" }}>
+                    ₹{assigned.toLocaleString("en-IN")} / ₹{total.toLocaleString("en-IN")}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
@@ -528,7 +566,7 @@ export default function AdminPage() {
               {includeItems.map((item, i) => (
                 <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 110px 30px", gap: 8 }}>
                   <input style={{ ...inputStyle, fontSize: 13 }} value={item.name} onChange={e => setItem(i, { name: e.target.value })} />
-                  <input type="number" min="0" style={{ ...inputStyle, fontSize: 13 }} value={item.price} onChange={e => setItem(i, { price: e.target.value })} />
+                  <input type="number" min="0" style={{ ...inputStyle, fontSize: 13 }} value={item.price} onChange={e => handleItemPriceChange(i, e.target.value)} />
                   <button type="button" onClick={() => setIncludeItems(p => p.filter((_, idx) => idx !== i))} style={iconBtn}>
                     <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
                   </button>
@@ -539,6 +577,23 @@ export default function AdminPage() {
               style={{ marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px dashed var(--line)", background: "transparent", color: "var(--muted)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", width: "100%" }}>
               + Add item
             </button>
+            {(() => {
+              const total = parseInt(form.price) || 0;
+              const assigned = includeItems.reduce((s, it) => s + (parseInt(it.price) || 0), 0);
+              const diff = total - assigned;
+              const over = diff < 0;
+              const exact = diff === 0 && total > 0;
+              return (
+                <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 10, background: over ? "#7B1D1D18" : exact ? "#14532D18" : "var(--paper-2)", border: `1px solid ${over ? "#7B1D1D44" : exact ? "#14532D44" : "var(--line)"}`, display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
+                  <span style={{ color: "var(--muted)" }}>
+                    {exact ? "✓ Adds up to project price" : over ? `₹${Math.abs(diff).toLocaleString("en-IN")} over project price` : `₹${Math.abs(diff).toLocaleString("en-IN")} unassigned`}
+                  </span>
+                  <span style={{ fontWeight: 700, color: over ? "#DC2626" : exact ? "#16A34A" : "var(--ink)" }}>
+                    ₹{assigned.toLocaleString("en-IN")} / ₹{total.toLocaleString("en-IN")}
+                  </span>
+                </div>
+              );
+            })()}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
             {[["files","Files"],["pages","Pages"],["rating","Rating"],["downloads","Downloads"]].map(([k, lbl]) => (
