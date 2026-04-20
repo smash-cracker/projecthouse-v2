@@ -218,6 +218,7 @@ function ThumbCollage({ thumbs, accent }: { thumbs: any[]; accent: string }) {
 export function Hero() {
   const { accent, projects } = useProjectHouse();
   const thumbs = projects.slice(0, 6);
+  const updatedLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "2-digit" }).replace(" ", " '");
 
   return (
     <section style={{ position: "relative", overflow: "hidden" }}>
@@ -257,7 +258,7 @@ export function Hero() {
                 boxShadow: `0 0 0 3px ${accent}33`,
               }}
             />
-            48 ready-made projects · updated April &apos;26
+            {projects.length} ready-made projects · updated {updatedLabel}
           </span>
         </div>
 
