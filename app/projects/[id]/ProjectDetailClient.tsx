@@ -25,9 +25,7 @@ const TIMELINE = [
   ["Day 3–5", "Customise dataset / tune for your use case"],
   ["Day 6",   "Deploy demo, record walkthrough"],
   ["Day 7",   "Viva prep — we answer your questions"],
-div>
-  );
-}
+];
 
 function Pill({ children, color }: { children: React.ReactNode; color?: string }) {
   return (
