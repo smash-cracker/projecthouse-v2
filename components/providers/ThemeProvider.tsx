@@ -68,11 +68,19 @@ function getClientCookie(name: string): string | undefined {
     ?.split("=")[1];
 }
 
-export function ThemeProvider({ children, initialTheme }: { children: React.ReactNode; initialTheme?: string }) {
+export function ThemeProvider({
+  children,
+  initialTheme,
+  initialProjects = [],
+}: {
+  children: React.ReactNode;
+  initialTheme?: string;
+  initialProjects?: any[];
+}) {
   const [dark, setDark] = useState(initialTheme === "dark");
   const [accent, setAccentState] = useState(TWEAK_DEFAULTS.accent);
-  const [projects, setProjects] = useState<any[]>([]);
-  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projects, setProjects] = useState<any[]>(initialProjects);
+  const [projectsLoading, setProjectsLoading] = useState(initialProjects.length === 0);
   const [openedProject, setOpenedProject] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tweaksVisible, setTweaksVisible] = useState(false);
@@ -87,9 +95,11 @@ export function ThemeProvider({ children, initialTheme }: { children: React.Reac
   }, []);
 
   useEffect(() => {
+    if (initialProjects.length > 0) { setProjectsLoading(false); return; }
     const supabase = createClient();
     supabase.from("projects").select("*").order("created_at", { ascending: false })
       .then(({ data }) => { setProjects(data ?? []); setProjectsLoading(false); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPurchases = async () => {

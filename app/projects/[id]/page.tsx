@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const keywords = [project.cat, ...(project.stack ?? [])].filter(Boolean);
 
   return {
-    title: `${project.title} — Project House`,
+    title: project.title,
     description,
     keywords,
     openGraph: {
@@ -32,8 +32,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: "Project House",
       type: "website",
     },
+    twitter: {
+      card: "summary_large_image",
+      title: project.title,
+      description,
+    },
     alternates: {
       canonical: `https://www.projecthouse.in/projects/${id}`,
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   };
 }
@@ -75,5 +84,39 @@ export default async function ProjectDetailPage({ params }: Props) {
     payment = data ?? null;
   }
 
-  return <ProjectDetailClient project={project} payment={payment} />;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: project.title,
+    description: project.description ?? "",
+    url: `https://www.projecthouse.in/projects/${id}`,
+    image: "https://www.projecthouse.in/og.png",
+    brand: { "@type": "Brand", name: "Project House" },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "INR",
+      price: project.price,
+      availability: "https://schema.org/InStock",
+      url: `https://www.projecthouse.in/projects/${id}`,
+      seller: { "@type": "Organization", name: "Project House" },
+    },
+    ...(project.rating && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: project.rating,
+        bestRating: 5,
+        ratingCount: project.downloads ?? 1,
+      },
+    }),
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProjectDetailClient project={project} payment={payment} />
+    </>
+  );
 }

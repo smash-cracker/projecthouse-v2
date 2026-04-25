@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/api/", "/auth/"],
+        disallow: ["/admin", "/api/", "/auth/", "/my-projects"],
       },
     ],
     sitemap: "https://www.projecthouse.in/sitemap.xml",

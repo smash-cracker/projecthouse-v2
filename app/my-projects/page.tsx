@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "My Projects",
+  description: "View and access your purchased capstone projects.",
+  robots: { index: false, follow: false },
+};
 import { ArrowUpRight } from "@/components/ui/icons";
 import { MyProjectsGrid } from "./MyProjectsGrid";
 
