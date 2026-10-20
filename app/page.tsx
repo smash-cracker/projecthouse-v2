@@ -1,32 +1,20 @@
-"use client";
+import { ProjectsProvider } from "@/components/providers/ProjectsProvider";
+import { createPublicClient } from "@/utils/supabase/public";
+import HomeClient from "./HomeClient";
 
-import { useProjectHouse } from "@/components/providers/ThemeProvider";
-import { Nav } from "@/components/layout/Nav";
-import { Footer } from "@/components/layout/Footer";
-import { Hero } from "@/components/features/Hero";
-import { Catalog } from "@/components/features/Catalog";
-import { Pricing } from "@/components/features/Pricing";
-import { Contact } from "@/components/features/Contact";
-import { Drawer } from "@/components/modals/Drawer";
-import { SearchPalette } from "@/components/modals/SearchPalette";
-import { TweakPanel } from "@/components/modals/TweakPanel";
-import { AuthModal } from "@/components/modals/AuthModal";
+// ISR: serve a cached homepage, refresh the catalog at most once a minute.
+export const revalidate = 60;
 
-export default function Home() {
-  const { dark } = useProjectHouse();
+export default async function Home() {
+  const supabase = createPublicClient();
+  const { data: projects } = await supabase
+    .from("projects")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   return (
-    <>
-      <Nav />
-      <Hero />
-      <Catalog />
-      <Pricing />
-      <Contact />
-      <Footer />
-      <Drawer />
-      <SearchPalette />
-      <TweakPanel />
-      <AuthModal />
-    </>
+    <ProjectsProvider initialProjects={projects ?? []}>
+      <HomeClient />
+    </ProjectsProvider>
   );
 }

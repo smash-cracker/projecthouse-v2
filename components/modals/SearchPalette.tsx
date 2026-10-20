@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
+import { useProjects } from "../providers/ProjectsProvider";
 export function SearchPalette() {
-  const { searchOpen: open, setSearchOpen: onClose, setOpenedProject: onOpen, projects } = useProjectHouse();
+  const { searchOpen: open, setSearchOpen: onClose, setOpenedProject: onOpen } = useProjectHouse();
+  const { projects } = useProjects();
   const [q, setQ] = useState("");
 
   useEffect(() => {

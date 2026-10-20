@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import { AppToaster } from "@/components/ui/AppToaster";
 import { TWEAK_DEFAULTS } from "@/lib/data";
 import { createClient } from "@/utils/supabase/client";
@@ -19,8 +19,6 @@ interface ProjectHouseState {
   setDark: React.Dispatch<React.SetStateAction<boolean>>;
   accent: string;
   setAccent: (c: string) => void;
-  projects: any[];
-  projectsLoading: boolean;
   openedProject: any | null;
   setOpenedProject: React.Dispatch<React.SetStateAction<any | null>>;
   searchOpen: boolean;
@@ -70,17 +68,11 @@ function getClientCookie(name: string): string | undefined {
 
 export function ThemeProvider({
   children,
-  initialTheme,
-  initialProjects = [],
 }: {
   children: React.ReactNode;
-  initialTheme?: string;
-  initialProjects?: any[];
 }) {
-  const [dark, setDark] = useState(initialTheme === "dark");
+  const [dark, setDark] = useState(false);
   const [accent, setAccentState] = useState(TWEAK_DEFAULTS.accent);
-  const [projects, setProjects] = useState<any[]>(initialProjects);
-  const [projectsLoading, setProjectsLoading] = useState(initialProjects.length === 0);
   const [openedProject, setOpenedProject] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tweaksVisible, setTweaksVisible] = useState(false);
@@ -92,14 +84,6 @@ export function ThemeProvider({
   useEffect(() => {
     const saved = getClientCookie("ph-theme");
     if (saved) setDark(saved === "dark");
-  }, []);
-
-  useEffect(() => {
-    if (initialProjects.length > 0) { setProjectsLoading(false); return; }
-    const supabase = createClient();
-    supabase.from("projects").select("*").order("created_at", { ascending: false })
-      .then(({ data }) => { setProjects(data ?? []); setProjectsLoading(false); });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPurchases = async () => {
@@ -129,7 +113,12 @@ export function ThemeProvider({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The root layout's inline script has already applied the saved theme before
+  // paint. Skip the first run so hydration doesn't reset it (or rewrite the
+  // cookie); only persist genuine user toggles.
+  const themeReady = useRef(false);
   useEffect(() => {
+    if (!themeReady.current) { themeReady.current = true; return; }
     document.documentElement.dataset.theme = dark ? "dark" : "light";
     document.cookie = `ph-theme=${dark ? "dark" : "light"}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
   }, [dark]);
@@ -177,8 +166,6 @@ export function ThemeProvider({
         setDark,
         accent,
         setAccent,
-        projects,
-        projectsLoading,
         openedProject,
         setOpenedProject,
         searchOpen,

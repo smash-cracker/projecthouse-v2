@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useProjectHouse } from "../providers/ThemeProvider";
+import { useProjects } from "../providers/ProjectsProvider";
 import { ArrowUpRight, Star } from "../ui/icons";
 
 function ThumbArt({ kind, accent, color }: { kind: string; accent: string; color: string }) {
@@ -216,7 +217,8 @@ function ThumbCollage({ thumbs, accent }: { thumbs: any[]; accent: string }) {
 }
 
 export function Hero() {
-  const { accent, projects } = useProjectHouse();
+  const { accent } = useProjectHouse();
+  const { projects } = useProjects();
   const thumbs = projects.slice(0, 6);
   const updatedLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "2-digit" }).replace(" ", " '");
 

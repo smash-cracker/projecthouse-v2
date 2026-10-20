@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Instrument_Serif, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
 import "./globals.css";
 
 const instrumentSerif = Instrument_Serif({
@@ -61,29 +59,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+// Applied before first paint so dark-mode visitors don't see a light flash.
+// Reading this cookie in the layout would opt every route into dynamic rendering.
+const THEME_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|;\\s*)ph-theme=([^;]+)/);if(m&&decodeURIComponent(m[1])==="dark"){document.documentElement.setAttribute("data-theme","dark")}}catch(e){}})();`;
+
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [cookieStore, supabase] = await Promise.all([cookies(), createClient()]);
-  const theme = cookieStore.get("ph-theme")?.value ?? "light";
-  const { data: initialProjects } = await supabase
-    .from("projects")
-    .select("*")
-    .order("created_at", { ascending: false });
-
   return (
     <html
       lang="en"
-      data-theme={theme}
       suppressHydrationWarning
       className={`${instrumentSerif.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <ThemeProvider initialTheme={theme} initialProjects={initialProjects ?? []}>
-          {children}
-        </ThemeProvider>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

@@ -2,8 +2,6 @@
 
 import React from "react";
 import { CATEGORIES } from "@/lib/data";
-import { jsPDF } from "jspdf";
-import JSZip from "jszip";
 
 // ─── Abstract ──────────────────────────────────────────────────────────────
 
@@ -15,7 +13,9 @@ export function AbstractPanel({ p }: { p: any }) {
     keywords: p.stack.join(", "),
   };
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
+    // Loaded on demand — keeps jsPDF out of the initial page bundle.
+    const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const W = doc.internal.pageSize.getWidth();
     const M = 54;
@@ -70,6 +70,8 @@ export function AbstractPanel({ p }: { p: any }) {
   };
 
   const downloadDOCX = async () => {
+    // Loaded on demand — keeps JSZip out of the initial page bundle.
+    const { default: JSZip } = await import("jszip");
     const zip = new JSZip();
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const para = (text: string, { bold = false, size = 22, color = "0A0F2C", italic = false, spaceAfter = 160 } = {}) => `
