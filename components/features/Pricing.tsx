@@ -166,51 +166,6 @@ export function Pricing({ bundles }: { bundles: Bundle[] }) {
             );
           })}
         </div>
-
-        <div
-          style={{
-            marginTop: 28,
-            padding: isMobile ? "18px 16px" : "22px 28px",
-            border: "1px dashed var(--line)",
-            borderRadius: 16,
-            display: "flex",
-            alignItems: isMobile ? "start" : "center",
-            justifyContent: "space-between",
-            gap: 20,
-            flexDirection: isMobile ? "column" : "row",
-          }}
-        >
-          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-            <div
-              style={{ width: 42, height: 42, borderRadius: "50%", background: accent, display: "grid", placeItems: "center", flexShrink: 0 }}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16">
-                <path d="M8 1l2 4.5L15 6l-3.5 3.5L12 15 8 12l-4 3 .5-5.5L1 6l5-.5L8 1z" fill="var(--accent-ink)" />
-              </svg>
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>Student discount · 30% off with a valid college ID</div>
-              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>
-                Upload your ID card at checkout · UPI, cards &amp; netbanking accepted.
-              </div>
-            </div>
-          </div>
-          <button
-            style={{
-              padding: "12px 20px",
-              borderRadius: 999,
-              border: "1px solid var(--line)",
-              background: "var(--card)",
-              fontFamily: "inherit",
-              cursor: "pointer",
-              fontSize: 13,
-              color: "var(--ink)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            How verification works →
-          </button>
-        </div>
       </div>
     </section>
   );

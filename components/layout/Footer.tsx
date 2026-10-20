@@ -96,7 +96,7 @@ export function Footer() {
                   "Mobile apps",
                 ],
               ],
-              ["Students", ["Pricing", "Student discount", "Viva prep", "Live support", "FAQ"]],
+              ["Students", ["Pricing", "Viva prep", "Live support", "FAQ"]],
               ["Company", ["About", "For colleges", "Affiliate", "Contact", "Terms"]],
             ] as [string, string[]][]
           ).map(([h, items]) => (
