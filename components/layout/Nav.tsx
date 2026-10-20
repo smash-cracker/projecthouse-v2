@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useTheme, useAuth, useUIActions } from "../providers/ThemeProvider";
 import { Logo, ArrowUpRight } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -74,7 +75,7 @@ export function Nav() {
                 {x}
               </a>
             ))}
-            <a
+            <Link
               href="/viva"
               style={{
                 padding: "10px 14px", borderRadius: 999,
@@ -82,7 +83,7 @@ export function Nav() {
               }}
             >
               Viva Prep
-            </a>
+            </Link>
           </nav>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -214,15 +215,15 @@ export function Nav() {
                           </div>
                         </div>
                         {user.isAdmin && (
-                          <a href="/admin" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
+                          <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
                             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/><rect x="8" y="1" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/><rect x="1" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/><rect x="8" y="8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4"/></svg>
                             Admin Dashboard
-                          </a>
+                          </Link>
                         )}
                         {([["My projects", "/my-projects"]] as const).map(([label, href]) => (
-                          <a key={label} href={href} style={{ display: "block", padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
+                          <Link key={label} href={href} style={{ display: "block", padding: "8px 12px", borderRadius: 8, fontSize: 13, color: "var(--ink)", textDecoration: "none" }}>
                             {label}
-                          </a>
+                          </Link>
                         ))}
                         <button
                           onClick={() => { signOut(); setMenuOpen(false); }}
@@ -300,7 +301,7 @@ export function Nav() {
                 {x}
               </a>
             ))}
-            <a
+            <Link
               href="/viva"
               onClick={() => setMobileNavOpen(false)}
               style={{
@@ -310,7 +311,7 @@ export function Nav() {
               }}
             >
               Viva Prep
-            </a>
+            </Link>
             <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
               {user ? (
                 <div>
@@ -328,7 +329,7 @@ export function Nav() {
                     <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{user.email}</div>
                   </div>
                   {user.isAdmin && (
-                    <a
+                    <Link
                       href="/admin"
                       onClick={() => setMobileNavOpen(false)}
                       style={{
@@ -338,10 +339,10 @@ export function Nav() {
                       }}
                     >
                       Admin Dashboard
-                    </a>
+                    </Link>
                   )}
                   {([["My projects", "/my-projects"]] as const).map(([label, href]) => (
-                    <a
+                    <Link
                       key={label}
                       href={href}
                       onClick={() => setMobileNavOpen(false)}
@@ -352,7 +353,7 @@ export function Nav() {
                       }}
                     >
                       {label}
-                    </a>
+                    </Link>
                   ))}
                   <button
                     onClick={() => { signOut(); setMobileNavOpen(false); }}

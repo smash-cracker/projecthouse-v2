@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CATEGORIES } from "@/lib/data";
 import { CardArt } from "@/components/features/ProjectCard";
 import { Star, ArrowUpRight } from "@/components/ui/icons";
@@ -15,7 +16,7 @@ function PurchasedCard({ payment, accent }: { payment: any; accent: string }) {
   });
 
   return (
-    <a
+    <Link
       href={`/projects/${payment.project_id}`}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
@@ -95,7 +96,7 @@ function PurchasedCard({ payment, accent }: { payment: any; accent: string }) {
           </span>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 

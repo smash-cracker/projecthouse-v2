@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -29,12 +30,12 @@ export default async function MyProjectsPage() {
 
         {/* Header */}
         <div style={{ marginBottom: 40 }}>
-          <a
+          <Link
             href="/"
             style={{ fontSize: 13, color: "var(--muted)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 24 }}
           >
             ← Back to catalog
-          </a>
+          </Link>
           <h1 className="serif" style={{ fontSize: "clamp(36px,5vw,64px)", margin: 0, letterSpacing: "-.02em", lineHeight: 1 }}>
             My Projects
           </h1>
@@ -49,7 +50,7 @@ export default async function MyProjectsPage() {
             <p style={{ fontSize: 15, color: "var(--muted)", margin: "0 0 20px" }}>
               You haven&apos;t purchased any projects yet.
             </p>
-            <a
+            <Link
               href="/#catalog"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
@@ -60,7 +61,7 @@ export default async function MyProjectsPage() {
               }}
             >
               Browse catalog <ArrowUpRight />
-            </a>
+            </Link>
           </div>
         )}
 

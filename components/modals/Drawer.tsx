@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useTheme, useAuth, useUI, useUIActions } from "../providers/ThemeProvider";
 import { CATEGORIES } from "@/lib/data";
 import { ArrowUpRight, Star } from "../ui/icons";
@@ -291,12 +292,12 @@ export function Drawer() {
               {p.cat === "mob" ? "Get demo APK" : "Book 1-hour demo"}
             </button>
             {alreadyPurchased ? (
-              <a
+              <Link
                 href={`/projects/${(p as any).id}`}
                 style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center", textDecoration: "none" }}
               >
                 Go to course <ArrowUpRight />
-              </a>
+              </Link>
             ) : user ? (
               <RazorpayButton
                 amount={(customTotal || (p as any).price) * 100}

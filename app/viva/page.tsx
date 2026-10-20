@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import { useTheme, useAuth } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { VIVA_TABS } from "@/lib/data";
@@ -591,7 +592,7 @@ export default function VivaPage() {
         height: 64, flexShrink: 0,
         background: "var(--card)", position: "sticky", top: 0, zIndex: 10,
       }}>
-        <a
+        <Link
           href="/"
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -603,7 +604,7 @@ export default function VivaPage() {
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M9 2L3 7l6 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-        </a>
+        </Link>
 
         {!isMobile && <span style={{ fontWeight: 700, fontSize: 16 }}>Viva Prep</span>}
 
@@ -833,12 +834,12 @@ export default function VivaPage() {
                 <div style={{ fontSize: 13, color: "var(--muted)" }}>
                   <span style={{ fontWeight: 600, color: "var(--ink)" }}>Want project-specific prep?</span> Every purchase includes a viva Q&amp;A guide tailored to your exact implementation.
                 </div>
-                <a
+                <Link
                   href="/#catalog"
                   style={{ padding: "10px 18px", borderRadius: 999, background: accent, color: "var(--accent-ink)", textDecoration: "none", fontSize: 13, fontWeight: 500, flexShrink: 0 }}
                 >
                   Browse projects →
-                </a>
+                </Link>
               </div>
             )}
           </div>

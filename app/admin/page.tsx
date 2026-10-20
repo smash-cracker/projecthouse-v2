@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useTheme, useAuth } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
@@ -1272,9 +1273,9 @@ export default function AdminPage() {
 
       {/* Top header */}
       <div style={{ borderBottom: "1px solid var(--line)", padding: "0 28px", display: "flex", alignItems: "center", gap: 12, height: 61, background: "var(--card)", position: "sticky", top: 0, zIndex: 10, flexShrink: 0 }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 9, border: "1px solid var(--line)", background: "var(--paper-2)", textDecoration: "none", color: "var(--ink)" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 9, border: "1px solid var(--line)", background: "var(--paper-2)", textDecoration: "none", color: "var(--ink)" }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L3 7l6 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </a>
+        </Link>
         <div>
           <div style={{ fontSize: 15, fontWeight: 700 }}>Admin Dashboard</div>
           <div style={{ fontSize: 11, color: "var(--muted)" }}>{user.email}</div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { CATEGORIES } from "@/lib/data";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useTheme, useAuth } from "@/components/providers/ThemeProvider";
@@ -78,7 +79,7 @@ function PurchaseGate({ accent, projectId }: { accent: string; projectId: string
           Source code and AI chat are available exclusively to buyers of this project.
         </div>
       </div>
-      <a
+      <Link
         href={`/#pricing`}
         style={{
           padding: "12px 28px", borderRadius: 999, border: "none",
@@ -92,7 +93,7 @@ function PurchaseGate({ accent, projectId }: { accent: string; projectId: string
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
-      </a>
+      </Link>
     </div>
   );
 }
@@ -239,7 +240,7 @@ export default function ProjectDetailClient({
         height: 64, flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <a
+          <Link
             href="/my-projects"
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -251,7 +252,7 @@ export default function ProjectDetailClient({
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M9 2L3 7l6 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </a>
+          </Link>
           {!isMobile && (
             <>
               <span style={{ color: "var(--line)", fontSize: 18 }}>/</span>
@@ -281,7 +282,7 @@ export default function ProjectDetailClient({
             ✓ Purchased
           </span>
         ) : (
-          <a
+          <Link
             href="/#pricing"
             style={{
               fontSize: 11, padding: "5px 14px", borderRadius: 999,
@@ -292,7 +293,7 @@ export default function ProjectDetailClient({
             }}
           >
             Get access
-          </a>
+          </Link>
         )}
       </div>
 
