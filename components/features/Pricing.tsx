@@ -26,7 +26,7 @@ export function Pricing({ bundles }: { bundles: Bundle[] }) {
             className="serif"
             style={{ fontSize: "clamp(36px,5.2vw,78px)", lineHeight: 1, margin: "12px 0 18px", letterSpacing: "-.02em" }}
           >
-            Pick one. Pack three. Or license the lot.
+            Pick one. Pack two. Or license the lot.
           </h2>
           <p style={{ fontSize: isMobile ? 16 : 18, color: "var(--muted)", lineHeight: 1.55, margin: 0, maxWidth: 620 }}>
             One-time payments. No subscriptions. Every project comes with lifetime access to its updates.

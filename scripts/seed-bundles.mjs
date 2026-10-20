@@ -37,12 +37,12 @@ async function seed() {
 
   const BUNDLES = [
     {
-      id: 'portfolio',
-      title: 'Portfolio Pack',
+      id: 'portfolio', // kept so re-seeding updates the existing row in place
+      title: 'Double Pack',
       price: 8999,
-      description: 'For a graduating class',
-      features: ['Any 3 projects, any category','Full source + datasets','Reports + slide decks','Deployment walkthrough','30-day live support','Private mentor review call'],
-      cta: 'Get portfolio pack',
+      description: 'For two capstones',
+      features: ['Any 2 projects, any category','Full source + datasets','Reports + slide decks','Deployment walkthrough','30-day live support','Private mentor review call'],
+      cta: 'Get double pack',
       color: '#2A2FB8',
       featured: false
     },
