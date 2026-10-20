@@ -5,7 +5,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "fs";
 
-// Manually parse .env.local
+// Manually parse .env.local (shell env vars take precedence)
 const env = {};
 try {
   const raw = readFileSync(".env.local", "utf8");
@@ -14,15 +14,16 @@ try {
     if (key && rest.length) env[key.trim()] = rest.join("=").trim();
   }
 } catch {
-  console.error(" Could not read .env.local");
-  process.exit(1);
+  // No .env.local — fall back to process.env below.
 }
 
-const SUPABASE_URL = env["NEXT_PUBLIC_SUPABASE_URL"];
-const SERVICE_KEY  = env["SUPABASE_SERVICE_ROLE_KEY"];
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? env["NEXT_PUBLIC_SUPABASE_URL"];
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? env["SUPABASE_SERVICE_ROLE_KEY"];
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
-  console.error(" Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local");
+  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.");
+  console.error("Add them to .env.local, or pass them inline:");
+  console.error("  NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed-bundles.mjs");
   process.exit(1);
 }
 
