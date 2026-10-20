@@ -4,6 +4,7 @@ import React from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import { useProjects } from "../providers/ProjectsProvider";
 import { ArrowUpRight, Star } from "../ui/icons";
+import type { ProjectSummary } from "@/lib/types";
 
 function ThumbArt({ kind, accent, color }: { kind: string; accent: string; color: string }) {
   const bg = color && color !== "#FF8A5C" ? color : "var(--indigo-deep)";
@@ -153,7 +154,7 @@ function ThumbArt({ kind, accent, color }: { kind: string; accent: string; color
   return null;
 }
 
-function ThumbCollage({ thumbs, accent }: { thumbs: any[]; accent: string }) {
+function ThumbCollage({ thumbs, accent }: { thumbs: ProjectSummary[]; accent: string }) {
   const tiles = [
     { x: 0, y: 10, w: 190, h: 240, r: -6, i: 0, kind: "notebook" },
     { x: 200, y: 0, w: 210, h: 160, r: 4, i: 1, kind: "code" },
@@ -354,7 +355,7 @@ export function Hero() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4, marginTop: 40 }}>
               {[
-                { n: "48", l: "Capstone-ready projects" },
+                { n: String(projects.length), l: "Capstone-ready projects" },
                 { n: "150+", l: "Orders" },
                 { n: "4.8", l: "Avg. rating", star: true },
               ].map((s) => (

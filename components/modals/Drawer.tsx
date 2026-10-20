@@ -3,25 +3,19 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useTheme, useAuth, useUI, useUIActions } from "../providers/ThemeProvider";
-import { CATEGORIES } from "@/lib/data";
+import { CATEGORIES, PROJECT_TIMELINE } from "@/lib/data";
 import { ArrowUpRight, Star } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { createClient } from "@/utils/supabase/client";
+import type { ProjectSummary } from "@/lib/types";
+import { extractYouTubeId } from "@/lib/youtube";
+import { Stat } from "@/components/ui/Stat";
 
 import { DemoModal } from "./DemoModal";
 import { PaymentSuccessModal } from "./PaymentSuccessModal";
 import { PaymentFailureModal } from "./PaymentFailureModal";
 import RazorpayButton from "../ui/RazorpayButton";
 import { AbstractPanel, StackPanel } from "@/components/features/ProjectPanels";
-
-const Stat = ({ n, l }: { n: number | string; l: string }) => (
-  <div style={{ padding: "14px 16px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 10 }}>
-    <div className="serif" style={{ fontSize: 32, lineHeight: 1, letterSpacing: "-.02em" }}>
-      {n}
-    </div>
-    <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>{l}</div>
-  </div>
-);
 
 export function Drawer() {
   const { accent } = useTheme();
@@ -37,7 +31,7 @@ export function Drawer() {
 
   // The catalog payload only carries the fields it renders. Load the heavier
   // per-project content the panels need once the drawer actually opens.
-  const [detail, setDetail] = useState<{ abstract?: any; stack_detail?: any } | null>(null);
+  const [detail, setDetail] = useState<Pick<ProjectSummary, "abstract" | "stack_detail"> | null>(null);
 
   useEffect(() => {
     if (!openedProject) {
@@ -65,7 +59,7 @@ export function Drawer() {
     [openedProject, detail]
   );
 
-  const p_includes: { name: string; price: number }[] = (project as any)?.includes ?? [];
+  const p_includes: ProjectSummary["includes"] = project?.includes ?? [];
   const toggleAddon = (idx: number) => {
     if (p_includes[idx]?.price === 0) return;
     setSel((s) => ({ ...s, [idx]: s[idx] !== false ? false : true }));
@@ -93,7 +87,7 @@ export function Drawer() {
 
   if (!project) return null;
   const p = project;
-  const alreadyPurchased = purchasedProjectIds.includes((p as any).id);
+  const alreadyPurchased = purchasedProjectIds.includes(p.id);
   const cat = CATEGORIES.find((c) => c.id === p.cat);
 
   return (
@@ -141,14 +135,7 @@ export function Drawer() {
         </div>
 
         {(() => {
-          const extractYouTubeID = (url?: string) => {
-            if (!url) return null;
-            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[7].length === 11) ? match[7] : null;
-          };
-          
-          const youtubeID = extractYouTubeID(p.youtube_link) || "XHTrLYShBRQ"; // Fallback demo video if link is missing
+          const youtubeID = extractYouTubeId(p.youtube_link) || "XHTrLYShBRQ"; // Fallback demo video if link is missing
 
           return (
             <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "#000", overflow: "hidden" }}>
@@ -182,9 +169,9 @@ export function Drawer() {
           <p style={{ fontSize: 16, color: "var(--muted)", lineHeight: 1.6, marginTop: 14 }}>{p.description}</p>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginTop: 24 }}>
-            <Stat n={p.files} l="files" />
-            <Stat n={p.pages} l="pages, report" />
-            <Stat n={p.stack.length} l="tech in stack" />
+            <Stat n={p.files} l="files" size="sm" />
+            <Stat n={p.pages} l="pages, report" size="sm" />
+            <Stat n={p.stack.length} l="tech in stack" size="sm" />
           </div>
 
           <div style={{ display: "flex", gap: 8, marginTop: 28, borderBottom: "1px solid var(--line)" }}>
@@ -258,13 +245,7 @@ export function Drawer() {
             {tab === "timeline" && (
               <ol style={{ listStyle: "none", padding: 0, margin: 0, position: "relative" }}>
                 <div style={{ position: "absolute", left: 11, top: 10, bottom: 10, width: 2, background: "var(--line)" }} />
-                {[
-                  ["Day 1", "Download, unzip, run setup script"],
-                  ["Day 2", "Walk through the report + notebooks"],
-                  ["Day 3–5", "Customise dataset / tune for your use case"],
-                  ["Day 6", "Deploy demo, record walkthrough"],
-                  ["Day 7", "Viva prep — we answer your questions"],
-                ].map(([d, t], i) => (
+                {PROJECT_TIMELINE.map(([d, t], i) => (
                   <li key={i} style={{ display: "flex", gap: 16, padding: "10px 0", position: "relative" }}>
                     <div style={{ width: 24, height: 24, borderRadius: "50%", background: i < 2 ? accent : "var(--card)", border: "1px solid var(--line)", display: "grid", placeItems: "center", flexShrink: 0, zIndex: 1 }}>
                       <span className="mono" style={{ fontSize: 10 }}>{i + 1}</span>
@@ -324,26 +305,26 @@ export function Drawer() {
             </button>
             {alreadyPurchased ? (
               <Link
-                href={`/projects/${(p as any).id}`}
+                href={`/projects/${p.id}`}
                 style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center", textDecoration: "none" }}
               >
                 Go to course <ArrowUpRight />
               </Link>
             ) : user ? (
               <RazorpayButton
-                amount={(customTotal || (p as any).price) * 100}
+                amount={(customTotal || p.price) * 100}
                 name="Project House"
-                description={(p as any).title}
-                projectId={(p as any).id}
-                projectTitle={(p as any).title}
+                description={p.title}
+                projectId={p.id}
+                projectTitle={p.title}
                 addons={p_includes
                   .filter((_, idx) => sel[idx] !== false)
                   .map((item) => item.name)}
                 onSuccess={(paymentId) => {
                   refreshPurchases();
-                  setPaymentSuccess({ paymentId, amount: (customTotal || (p as any).price) * 100 });
+                  setPaymentSuccess({ paymentId, amount: (customTotal || p.price) * 100 });
                 }}
-                onFailure={(err) => setPaymentFailure({ description: (err as any)?.description })}
+                onFailure={(err) => setPaymentFailure({ description: (err as { description?: string } | undefined)?.description })}
                 style={{ padding: "14px 22px", borderRadius: 999, border: "none", background: "var(--ink)", color: "var(--paper)", fontFamily: "inherit", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "inline-flex", gap: 8, alignItems: "center" }}
               >
                 Get this course <ArrowUpRight />
@@ -362,7 +343,7 @@ export function Drawer() {
       {demoOpen && <DemoModal project={p} onClose={() => setDemoOpen(false)} accent={accent} />}
       {paymentFailure && (
         <PaymentFailureModal
-          projectTitle={(p as any).title}
+          projectTitle={p.title}
           errorDescription={paymentFailure.description}
           accent={accent}
           onRetry={() => setPaymentFailure(null)}
@@ -371,7 +352,7 @@ export function Drawer() {
       )}
       {paymentSuccess && (
         <PaymentSuccessModal
-          projectTitle={(p as any).title}
+          projectTitle={p.title}
           paymentId={paymentSuccess.paymentId}
           amount={paymentSuccess.amount}
           accent={accent}

@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 };
 import { ArrowUpRight } from "@/components/ui/icons";
 import { MyProjectsGrid } from "./MyProjectsGrid";
+import type { PaymentRecord } from "@/lib/types";
 
 export default async function MyProjectsPage() {
   const supabase = await createClient();
@@ -22,7 +23,7 @@ export default async function MyProjectsPage() {
     .select("*, project:projects(id, title, cat, tag, color, level, stack, rating, files, pages, description)")
     .order("created_at", { ascending: false });
 
-  const items = payments ?? [];
+  const items: PaymentRecord[] = payments ?? [];
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--paper)", color: "var(--ink)", padding: "48px 24px" }}>
@@ -73,7 +74,7 @@ export default async function MyProjectsPage() {
           <div style={{ marginTop: 56, borderTop: "1px solid var(--line)", paddingTop: 32 }}>
             <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Payment history</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {items.map((payment: any) => (
+              {items.map((payment) => (
                 <div
                   key={payment.id}
                   style={{

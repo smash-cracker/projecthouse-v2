@@ -11,6 +11,8 @@ import React, {
 } from "react";
 import { AppToaster } from "@/components/ui/AppToaster";
 import { TWEAK_DEFAULTS } from "@/lib/data";
+import type { ProjectSummary } from "@/lib/types";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createClient } from "@/utils/supabase/client";
 
 interface User {
@@ -29,7 +31,7 @@ interface User {
 
 type SetDark = React.Dispatch<React.SetStateAction<boolean>>;
 type SetBoolean = React.Dispatch<React.SetStateAction<boolean>>;
-type SetProject = React.Dispatch<React.SetStateAction<any | null>>;
+type SetProject = React.Dispatch<React.SetStateAction<ProjectSummary | null>>;
 
 interface ThemeState {
   dark: boolean;
@@ -48,7 +50,7 @@ interface AuthState {
 }
 
 interface UIState {
-  openedProject: any | null;
+  openedProject: ProjectSummary | null;
   searchOpen: boolean;
   tweaksVisible: boolean;
 }
@@ -64,7 +66,7 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 const UIContext = createContext<UIState | undefined>(undefined);
 const UIActionsContext = createContext<UIActions | undefined>(undefined);
 
-function supabaseUserToUser(sbUser: any): User | null {
+function supabaseUserToUser(sbUser: SupabaseUser | null | undefined): User | null {
   if (!sbUser) return null;
   const meta = sbUser.user_metadata ?? {};
   const name = meta.full_name ?? meta.name ?? meta.user_name ?? sbUser.email ?? "User";
@@ -99,7 +101,7 @@ export function ThemeProvider({
 }) {
   const [dark, setDark] = useState(false);
   const [accent, setAccentState] = useState(TWEAK_DEFAULTS.accent);
-  const [openedProject, setOpenedProject] = useState<any | null>(null);
+  const [openedProject, setOpenedProject] = useState<ProjectSummary | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tweaksVisible, setTweaksVisible] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -114,7 +116,7 @@ export function ThemeProvider({
   const fetchPurchases = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase.from("payments").select("project_id");
-    setPurchasedProjectIds((data ?? []).map((r: any) => r.project_id).filter(Boolean));
+    setPurchasedProjectIds((data ?? []).map((r) => r.project_id).filter(Boolean));
   }, []);
 
   useEffect(() => {

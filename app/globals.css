@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bridge the next/font variables into Tailwind's font utilities. */
+@theme inline {
+  --font-sans: var(--font-space-grotesk), system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
 :root{
   --accent: #FF8A5C;       /* peach */
   --accent-ink: #0A0F2C;   /* text-on-accent */
@@ -165,4 +172,15 @@ a{
   }
 }
 
-
+/* ── Loading spinner ── */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

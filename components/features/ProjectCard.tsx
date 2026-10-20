@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import { CATEGORIES } from "@/lib/data";
 import { Star, ArrowUpRight } from "../ui/icons";
+import type { ProjectSummary } from "@/lib/types";
 
-export function CardArt({ project: p, accent, hover }: { project: any; accent: string; hover: boolean }) {
+export function CardArt({ project: p, accent, hover }: { project: Pick<ProjectSummary, "cat" | "color">; accent: string; hover: boolean }) {
   const light = p.color === "#FF8A5C";
   const fg = light ? "var(--ink)" : "#ffffff";
   const sub = light ? "rgba(10,15,44,.55)" : "rgba(255,255,255,.6)";
@@ -248,12 +249,10 @@ export function ProjectCard({
   p,
   accent,
   onOpen,
-  featured,
 }: {
-  p: any;
+  p: ProjectSummary;
   accent: string;
-  onOpen: (p: any) => void;
-  featured: boolean;
+  onOpen: (p: ProjectSummary) => void;
 }) {
   const [hover, setHover] = useState(false);
   const cat = CATEGORIES.find((c) => c.id === p.cat);

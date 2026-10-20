@@ -4,10 +4,12 @@ import React from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import { Logo } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { useProjects } from "../providers/ProjectsProvider";
 
 export function Footer() {
   const { accent } = useTheme();
   const isMobile = useIsMobile();
+  const { projects } = useProjects();
 
   return (
     <footer style={{ background: "#0A0F2C", color: "#F3F0E6", marginTop: 60 }}>
@@ -148,7 +150,7 @@ export function Footer() {
           }}
         >
           <span>© 2026 Project House. Built for people who build.</span>
-          {!isMobile && <span className="mono">v1.0 · 48 projects · last drop 03 Apr</span>}
+          {!isMobile && <span className="mono">v1.0 · {projects.length} projects</span>}
         </div>
       </div>
     </footer>

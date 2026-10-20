@@ -58,7 +58,7 @@ export function SearchPalette() {
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search 48 projects, stacks, or topics…"
+            placeholder={`Search ${projects.length} projects, stacks, or topics…`}
             style={{ flex: 1, border: "none", outline: "none", background: "transparent", color: "var(--ink)", fontSize: 17, fontFamily: "inherit" }}
           />
           <span className="mono" style={{ fontSize: 11, color: "var(--muted)", border: "1px solid var(--line)", padding: "2px 7px", borderRadius: 4 }}>

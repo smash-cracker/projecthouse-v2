@@ -4,8 +4,9 @@ import React from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import { ArrowUpRight } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import type { Bundle } from "@/lib/types";
 
-export function Pricing({ bundles }: { bundles: any[] }) {
+export function Pricing({ bundles }: { bundles: Bundle[] }) {
   const { accent } = useTheme();
   const isMobile = useIsMobile();
 
@@ -109,7 +110,7 @@ export function Pricing({ bundles }: { bundles: any[] }) {
                     flex: 1,
                   }}
                 >
-                  {(b.features || []).map((f: string) => (
+                  {(b.features || []).map((f) => (
                     <li key={f} style={{ display: "flex", gap: 10, alignItems: "start", fontSize: 14, lineHeight: 1.4 }}>
                       <span
                         style={{

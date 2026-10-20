@@ -1,9 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useMemo } from "react";
+import type { ProjectSummary } from "@/lib/types";
 
 interface ProjectsState {
-  projects: any[];
+  projects: ProjectSummary[];
   projectsLoading: boolean;
 }
 
@@ -19,7 +20,7 @@ export function ProjectsProvider({
   initialProjects = [],
 }: {
   children: React.ReactNode;
-  initialProjects?: any[];
+  initialProjects?: ProjectSummary[];
 }) {
   const value = useMemo(
     () => ({ projects: initialProjects, projectsLoading: false }),

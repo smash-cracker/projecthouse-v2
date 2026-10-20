@@ -5,18 +5,10 @@ import Link from "next/link";
 import { useTheme, useAuth } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { VIVA_TABS } from "@/lib/data";
+import { VIVA_TABS, PROJECT_CATEGORIES as CATEGORIES } from "@/lib/data";
 import { toast } from "sonner";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  { id: "ml", label: "Machine Learning" },
-  { id: "dl", label: "Deep Learning" },
-  { id: "cv", label: "Computer Vision" },
-  { id: "web", label: "Web Applications" },
-  { id: "mob", label: "Mobile Applications" },
-];
 
 const LEVELS = ["Beginner", "Intermediate", "Advanced"];
 

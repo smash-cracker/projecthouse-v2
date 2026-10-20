@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { CATEGORIES } from "@/lib/data";
+import { CATEGORIES, PROJECT_TIMELINE } from "@/lib/data";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useTheme, useAuth } from "@/components/providers/ThemeProvider";
 import { AbstractPanel, StackPanel } from "@/components/features/ProjectPanels";
 import { createClient } from "@/utils/supabase/client";
+import type { ProjectSummary } from "@/lib/types";
+import { extractYouTubeId } from "@/lib/youtube";
 
 const PUBLIC_TABS = [
   { id: "overview",  label: "What you get" },
@@ -20,14 +22,6 @@ const GATED_TABS = [
 ];
 
 const TABS = [...PUBLIC_TABS, ...GATED_TABS];
-
-const TIMELINE = [
-  ["Day 1",   "Download, unzip, run setup script"],
-  ["Day 2",   "Walk through the report + notebooks"],
-  ["Day 3–5", "Customise dataset / tune for your use case"],
-  ["Day 6",   "Deploy demo, record walkthrough"],
-  ["Day 7",   "Viva prep — we answer your questions"],
-];
 
 function Pill({ children, color }: { children: React.ReactNode; color?: string }) {
   return (
@@ -46,16 +40,7 @@ function Pill({ children, color }: { children: React.ReactNode; color?: string }
   );
 }
 
-function Stat({ n, l }: { n: number | string; l: string }) {
-  return (
-    <div style={{ padding: "16px 20px", background: "var(--card)", border: "1px solid var(--line)", borderRadius: 12 }}>
-      <div className="serif" style={{ fontSize: 36, lineHeight: 1, letterSpacing: "-.02em" }}>{n}</div>
-      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{l}</div>
-    </div>
-  );
-}
-
-function PurchaseGate({ accent, projectId }: { accent: string; projectId: string }) {
+function PurchaseGate({ accent }: { accent: string }) {
   return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
@@ -98,7 +83,7 @@ function PurchaseGate({ accent, projectId }: { accent: string; projectId: string
   );
 }
 
-function FileTree({ project }: { project: any }) {
+function FileTree({ project }: { project: ProjectSummary }) {
   const rootName = project.id ?? "project";
   const files: { name: string; type: "file" | "folder"; children?: { name: string }[] }[] = [
     {
@@ -181,7 +166,7 @@ type Payment = {
 export default function ProjectDetailClient({
   project: p,
 }: {
-  project: any;
+  project: ProjectSummary;
 }) {
   const { accent } = useTheme();
   const { user, purchasedProjectIds } = useAuth();
@@ -215,18 +200,12 @@ export default function ProjectDetailClient({
   }, [p.id, user]);
 
   const cat = CATEGORIES.find((c) => c.id === p.cat);
-  const ab = p.abstract || { objective: p.description, methodology: "", results: "", keywords: p.stack?.join(", ") ?? "" };
   const hasPurchased = payment !== null || purchasedProjectIds.includes(p.id);
   const paidDate = payment
     ? new Date(payment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
     : null;
 
-  const extractYouTubeID = (url?: string) => {
-    if (!url) return null;
-    const m = url.match(/^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/);
-    return m && m[7].length === 11 ? m[7] : null;
-  };
-  const youtubeID = extractYouTubeID(p.youtube_link);
+  const youtubeID = extractYouTubeId(p.youtube_link);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--paper)", color: "var(--ink)" }}>
@@ -427,7 +406,7 @@ export default function ProjectDetailClient({
           {tab === "timeline" && (
             <ol style={{ listStyle: "none", padding: 0, margin: 0, position: "relative" }}>
               <div style={{ position: "absolute", left: 11, top: 10, bottom: 10, width: 2, background: "var(--line)" }} />
-              {TIMELINE.map(([day, task], i) => (
+              {PROJECT_TIMELINE.map(([day, task], i) => (
                 <li key={i} style={{ display: "flex", gap: 18, padding: "12px 0", position: "relative" }}>
                   <div style={{
                     width: 24, height: 24, borderRadius: "50%",
@@ -531,7 +510,7 @@ export default function ProjectDetailClient({
 
               </div>
             ) : (
-              <PurchaseGate accent={accent} projectId={p.id} />
+              <PurchaseGate accent={accent} />
             )
           )}
 

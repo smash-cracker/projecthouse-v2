@@ -10,8 +10,9 @@ import { Drawer } from "@/components/modals/Drawer";
 import { SearchPalette } from "@/components/modals/SearchPalette";
 import { TweakPanel } from "@/components/modals/TweakPanel";
 import { AuthModal } from "@/components/modals/AuthModal";
+import type { Bundle } from "@/lib/types";
 
-export default function HomeClient({ bundles }: { bundles: any[] }) {
+export default function HomeClient({ bundles }: { bundles: Bundle[] }) {
   return (
     <>
       <Nav />

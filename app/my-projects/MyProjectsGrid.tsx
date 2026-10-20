@@ -6,8 +6,9 @@ import { CATEGORIES } from "@/lib/data";
 import { CardArt } from "@/components/features/ProjectCard";
 import { Star, ArrowUpRight } from "@/components/ui/icons";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import type { PaymentRecord } from "@/lib/types";
 
-function PurchasedCard({ payment, accent }: { payment: any; accent: string }) {
+function PurchasedCard({ payment, accent }: { payment: PaymentRecord; accent: string }) {
   const [hover, setHover] = useState(false);
   const p = payment.project;
   const cat = CATEGORIES.find((c) => c.id === p?.cat);
@@ -69,16 +70,16 @@ function PurchasedCard({ payment, accent }: { payment: any; accent: string }) {
               {s}
             </span>
           ))}
-          {p?.stack?.length > 3 && (
+          {p && p.stack.length > 3 && (
             <span className="mono" style={{ fontSize: 10, color: "var(--muted)" }}>+{p.stack.length - 3}</span>
           )}
         </div>
 
         <h3 style={{ fontSize: 18, lineHeight: 1.25, margin: 0, letterSpacing: "-.01em", fontWeight: 600 }}>
-          {payment.project_title}
+          {payment.project_title ?? payment.project_id}
         </h3>
         <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5, margin: "8px 0 0", flex: 1 }}>
-          {p?.description?.length > 110 ? p.description.slice(0, 110) + "…" : p?.description}
+          {p && p.description.length > 110 ? p.description.slice(0, 110) + "…" : p?.description}
         </p>
 
         {/* Footer */}
@@ -100,7 +101,7 @@ function PurchasedCard({ payment, accent }: { payment: any; accent: string }) {
   );
 }
 
-export function MyProjectsGrid({ payments }: { payments: any[] }) {
+export function MyProjectsGrid({ payments }: { payments: PaymentRecord[] }) {
   const { accent } = useTheme();
 
   return (

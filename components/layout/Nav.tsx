@@ -197,17 +197,18 @@ export function Nav() {
             </button>
 
             {/* Browse catalog — hidden on mobile via CSS */}
-            <button
+            <Link
+              href="/#catalog"
               className="nav-desktop"
               style={{
                 padding: "10px 18px", borderRadius: 999, border: "none",
                 background: "var(--ink)", color: "var(--paper)",
                 cursor: "pointer", fontSize: 13, fontWeight: 500,
-                alignItems: "center", gap: 8,
+                alignItems: "center", gap: 8, textDecoration: "none",
               }}
             >
               Browse catalog <ArrowUpRight />
-            </button>
+            </Link>
 
             {/* User menu — desktop only via CSS */}
             <div className="nav-desktop" style={{ alignItems: "center" }}>

@@ -2,16 +2,29 @@
 
 import React from "react";
 import { CATEGORIES } from "@/lib/data";
+import type { ProjectSummary } from "@/lib/types";
 
 // ─── Abstract ──────────────────────────────────────────────────────────────
 
-export function AbstractPanel({ p }: { p: any }) {
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div className="mono" style={{ fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8 }}>
+        {label}
+      </div>
+      <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.65, color: "var(--ink)" }}>{children}</p>
+    </div>
+  );
+}
+
+export function AbstractPanel({ p }: { p: ProjectSummary }) {
   const ab = p.abstract || {
     objective: p.description,
     methodology: "Detailed methodology available in the full report included with purchase.",
     results: "Results documented in the final report.",
     keywords: p.stack.join(", "),
   };
+  const catLabel = CATEGORIES.find((c) => c.id === p.cat)?.label.toUpperCase() || "";
 
   const downloadPDF = async () => {
     // Loaded on demand — keeps jsPDF out of the initial page bundle.
@@ -30,7 +43,6 @@ export function AbstractPanel({ p }: { p: any }) {
 
     doc.setFont("times", "italic");
     doc.setFontSize(10);
-    const catLabel = CATEGORIES.find((c) => c.id === p.cat)?.label.toUpperCase() || "";
     doc.text(catLabel + "  ·  " + p.level, M, y);
     y += 18;
     doc.setFont("times", "bold");
@@ -78,7 +90,6 @@ export function AbstractPanel({ p }: { p: any }) {
 <w:p><w:pPr><w:spacing w:after="${spaceAfter}"/></w:pPr><w:r><w:rPr>${bold ? "<w:b/>" : ""}${italic ? "<w:i/>" : ""}<w:sz w:val="${size}"/><w:color w:val="${color}"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr><w:t xml:space="preserve">${esc(text)}</w:t></w:r></w:p>`;
     const heading = (t: string) => para(t, { bold: true, size: 18, color: "5A6078", spaceAfter: 80 });
 
-    const catLabel = CATEGORIES.find((c) => c.id === p.cat)?.label.toUpperCase() || "";
     const body = [
       para("PROJECT HOUSE  //  ABSTRACT", { bold: true, size: 18, color: "5A6078", spaceAfter: 120 }),
       para(catLabel + "  ·  " + p.level, { italic: true, size: 18, color: "5A6078", spaceAfter: 120 }),
@@ -121,15 +132,6 @@ export function AbstractPanel({ p }: { p: any }) {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
-
-  const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div style={{ marginBottom: 20 }}>
-      <div className="mono" style={{ fontSize: 10, letterSpacing: ".18em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 8 }}>
-        {label}
-      </div>
-      <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.65, color: "var(--ink)" }}>{children}</p>
-    </div>
-  );
 
   return (
     <div>
@@ -194,11 +196,8 @@ function toArr(v: unknown): string[] {
   return [String(v)];
 }
 
-export function StackPanel({ p, accent }: { p: any; accent: string }) {
-  const s = p.stack_detail || {};
-  const isModel = s.kind === "ml" || s.kind === "dl";
-
-  const Pill = ({ children, tone = "default" }: { children: React.ReactNode; tone?: string }) => (
+function Pill({ children, tone = "default", accent }: { children: React.ReactNode; tone?: string; accent: string }) {
+  return (
     <span
       className="mono"
       style={{
@@ -211,8 +210,10 @@ export function StackPanel({ p, accent }: { p: any; accent: string }) {
       {children}
     </span>
   );
+}
 
-  const Row = ({ icon, label, items, tone }: { icon: React.ReactNode; label: string; items: string[]; tone?: string }) => (
+function Row({ icon, label, items, tone, accent }: { icon: React.ReactNode; label: string; items: string[]; tone?: string; accent: string }) {
+  return (
     <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: 20, padding: "16px 0", borderBottom: "1px solid var(--line)", alignItems: "start" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{
@@ -226,12 +227,14 @@ export function StackPanel({ p, accent }: { p: any; accent: string }) {
         <span style={{ fontSize: 13, fontWeight: 600 }}>{label}</span>
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {items.map((x, i) => <Pill key={i} tone={tone}>{x}</Pill>)}
+        {items.map((x, i) => <Pill key={i} tone={tone} accent={accent}>{x}</Pill>)}
       </div>
     </div>
   );
+}
 
-  const MetricCard = ({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: string }) => (
+function MetricCard({ label, value, sub, tone, accent }: { label: string; value: string; sub?: string; tone?: string; accent: string }) {
+  return (
     <div style={{
       padding: "16px 18px", borderRadius: 14,
       background: tone === "accent" ? accent : "var(--card)",
@@ -243,51 +246,56 @@ export function StackPanel({ p, accent }: { p: any; accent: string }) {
       {sub && <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}>{sub}</div>}
     </div>
   );
+}
 
-  const ic = {
-    brain: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M5 3a2 2 0 014 0 2 2 0 012 2v1a2 2 0 010 4v1a2 2 0 01-2 2 2 2 0 01-4 0 2 2 0 01-2-2v-1a2 2 0 010-4V5a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.2"/></svg>,
-    data: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="4" rx="5" ry="2" stroke="currentColor" strokeWidth="1.2"/><path d="M3 4v8c0 1.1 2.24 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.24 2 5 2s5-.9 5-2" stroke="currentColor" strokeWidth="1.2"/></svg>,
-    target: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2"/><circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2"/><circle cx="8" cy="8" r=".8" fill="currentColor"/></svg>,
-    frontend: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="9" rx="1.2" stroke="currentColor" strokeWidth="1.2"/><path d="M2 6h12" stroke="currentColor" strokeWidth="1.2"/></svg>,
-    backend: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="3" rx=".8" stroke="currentColor" strokeWidth="1.2"/><rect x="2" y="8" width="12" height="3" rx=".8" stroke="currentColor" strokeWidth="1.2"/><circle cx="4.5" cy="4.5" r=".5" fill="currentColor"/><circle cx="4.5" cy="9.5" r=".5" fill="currentColor"/></svg>,
-    db: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="4" rx="5" ry="1.6" stroke="currentColor" strokeWidth="1.2"/><path d="M3 4v8c0 .9 2.24 1.6 5 1.6s5-.7 5-1.6V4" stroke="currentColor" strokeWidth="1.2"/></svg>,
-    lock: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M5 7V5a3 3 0 116 0v2" stroke="currentColor" strokeWidth="1.2"/></svg>,
-    cloud: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 12a3 3 0 010-6 4 4 0 017.5-1 3 3 0 01.5 6H4z" stroke="currentColor" strokeWidth="1.2"/></svg>,
-    train: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 13l3-3 2 2 4-4 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  };
+const ICONS = {
+  brain: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M5 3a2 2 0 014 0 2 2 0 012 2v1a2 2 0 010 4v1a2 2 0 01-2 2 2 2 0 01-4 0 2 2 0 01-2-2v-1a2 2 0 010-4V5a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.2"/></svg>,
+  data: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="4" rx="5" ry="2" stroke="currentColor" strokeWidth="1.2"/><path d="M3 4v8c0 1.1 2.24 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.24 2 5 2s5-.9 5-2" stroke="currentColor" strokeWidth="1.2"/></svg>,
+  target: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2"/><circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2"/><circle cx="8" cy="8" r=".8" fill="currentColor"/></svg>,
+  frontend: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="9" rx="1.2" stroke="currentColor" strokeWidth="1.2"/><path d="M2 6h12" stroke="currentColor" strokeWidth="1.2"/></svg>,
+  backend: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="3" rx=".8" stroke="currentColor" strokeWidth="1.2"/><rect x="2" y="8" width="12" height="3" rx=".8" stroke="currentColor" strokeWidth="1.2"/><circle cx="4.5" cy="4.5" r=".5" fill="currentColor"/><circle cx="4.5" cy="9.5" r=".5" fill="currentColor"/></svg>,
+  db: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="4" rx="5" ry="1.6" stroke="currentColor" strokeWidth="1.2"/><path d="M3 4v8c0 .9 2.24 1.6 5 1.6s5-.7 5-1.6V4" stroke="currentColor" strokeWidth="1.2"/></svg>,
+  lock: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M5 7V5a3 3 0 116 0v2" stroke="currentColor" strokeWidth="1.2"/></svg>,
+  cloud: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 12a3 3 0 010-6 4 4 0 017.5-1 3 3 0 01.5 6H4z" stroke="currentColor" strokeWidth="1.2"/></svg>,
+  train: <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 13l3-3 2 2 4-4 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+};
+
+export function StackPanel({ p, accent }: { p: ProjectSummary; accent: string }) {
+  const s = p.stack_detail || {};
+  const isModel = s.kind === "ml" || s.kind === "dl";
 
   return (
     <div>
       {isModel && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 18 }}>
-          <MetricCard label="Algorithm" value={s.algorithm?.split(" ").slice(0, 3).join(" ") || "—"} sub={s.algorithm} />
-          <MetricCard label="Accuracy" value={(s.accuracy || "—").split(" ·")[0]} sub={s.accuracy} tone="accent" />
-          <MetricCard label="Dataset" value={(s.dataset || "—").split(" ·")[0]} sub={s.dataset} />
+          <MetricCard accent={accent} label="Algorithm" value={s.algorithm?.split(" ").slice(0, 3).join(" ") || "—"} sub={s.algorithm} />
+          <MetricCard accent={accent} label="Accuracy" value={(s.accuracy || "—").split(" ·")[0]} sub={s.accuracy} tone="accent" />
+          <MetricCard accent={accent} label="Dataset" value={(s.dataset || "—").split(" ·")[0]} sub={s.dataset} />
         </div>
       )}
       {!isModel && (s.kind === "web" || s.kind === "mob") && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 18 }}>
-          <MetricCard label="Platform" value={s.kind === "web" ? "Web" : "Mobile"} sub={s.kind === "web" ? "Responsive, PWA-ready" : "iOS + Android"} />
-          <MetricCard label="Architecture" value={s.kind === "web" ? "Full-stack" : "Cross-platform"} sub={p.stack.join(" · ")} tone="accent" />
-          <MetricCard label="Auth" value={toArr(s.auth)[0] || "JWT"} sub={s.auth ? toArr(s.auth).join(" · ") : "Standard auth flow"} />
+          <MetricCard accent={accent} label="Platform" value={s.kind === "web" ? "Web" : "Mobile"} sub={s.kind === "web" ? "Responsive, PWA-ready" : "iOS + Android"} />
+          <MetricCard accent={accent} label="Architecture" value={s.kind === "web" ? "Full-stack" : "Cross-platform"} sub={p.stack.join(" · ")} tone="accent" />
+          <MetricCard accent={accent} label="Auth" value={toArr(s.auth)[0] || "JWT"} sub={s.auth ? toArr(s.auth).join(" · ") : "Standard auth flow"} />
         </div>
       )}
 
       <div style={{ background: "var(--card)", border: "1px solid var(--line)", borderRadius: 14, padding: "4px 20px" }}>
         {isModel && (
           <>
-            {s.algorithm && <Row icon={ic.brain} label="Algorithm" items={[s.algorithm]} tone="accent" />}
-            {s.training && <Row icon={ic.train} label="Training" items={[s.training]} />}
-            {s.dataset && <Row icon={ic.data} label="Dataset" items={[s.dataset]} />}
-            {s.accuracy && <Row icon={ic.target} label="Accuracy" items={s.accuracy.split(" · ")} />}
+            {s.algorithm && <Row accent={accent} icon={ICONS.brain} label="Algorithm" items={[s.algorithm]} tone="accent" />}
+            {s.training && <Row accent={accent} icon={ICONS.train} label="Training" items={[s.training]} />}
+            {s.dataset && <Row accent={accent} icon={ICONS.data} label="Dataset" items={[s.dataset]} />}
+            {s.accuracy && <Row accent={accent} icon={ICONS.target} label="Accuracy" items={s.accuracy.split(" · ")} />}
           </>
         )}
-        {s.model && <Row icon={ic.brain} label="Model" items={[s.model]} tone="accent" />}
-        {s.frontend && <Row icon={ic.frontend} label="Frontend" items={toArr(s.frontend)} />}
-        {s.backend && <Row icon={ic.backend} label="Backend" items={toArr(s.backend)} />}
-        {s.db && <Row icon={ic.db} label="Database" items={toArr(s.db)} />}
-        {s.auth && <Row icon={ic.lock} label="Auth" items={toArr(s.auth)} />}
-        {s.deploy && <Row icon={ic.cloud} label="Deploy" items={toArr(s.deploy)} />}
+        {s.model && <Row accent={accent} icon={ICONS.brain} label="Model" items={[s.model]} tone="accent" />}
+        {s.frontend && <Row accent={accent} icon={ICONS.frontend} label="Frontend" items={toArr(s.frontend)} />}
+        {s.backend && <Row accent={accent} icon={ICONS.backend} label="Backend" items={toArr(s.backend)} />}
+        {s.db && <Row accent={accent} icon={ICONS.db} label="Database" items={toArr(s.db)} />}
+        {s.auth && <Row accent={accent} icon={ICONS.lock} label="Auth" items={toArr(s.auth)} />}
+        {s.deploy && <Row accent={accent} icon={ICONS.cloud} label="Deploy" items={toArr(s.deploy)} />}
       </div>
     </div>
   );

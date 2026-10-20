@@ -280,13 +280,12 @@ export function Catalog() {
           {projectsLoading && Array.from({ length: 4 }).map((_, i) => (
             <ProjectCardSkeleton key={i} />
           ))}
-          {!projectsLoading && filtered.map((p, i) => (
+          {!projectsLoading && filtered.map((p) => (
             <ProjectCard
               key={p.id}
               p={p}
               accent={accent}
               onOpen={setOpenedProject}
-              featured={i === 0 && cat === "all" && !q}
             />
           ))}
           {filtered.length === 0 && !q.trim() && !projectsLoading && (
