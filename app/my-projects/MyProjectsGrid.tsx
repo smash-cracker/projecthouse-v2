@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CATEGORIES } from "@/lib/data";
 import { CardArt } from "@/components/features/ProjectCard";
 import { Star, ArrowUpRight } from "@/components/ui/icons";
-import { useProjectHouse } from "@/components/providers/ThemeProvider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 function PurchasedCard({ payment, accent }: { payment: any; accent: string }) {
   const [hover, setHover] = useState(false);
@@ -100,7 +100,7 @@ function PurchasedCard({ payment, accent }: { payment: any; accent: string }) {
 }
 
 export function MyProjectsGrid({ payments }: { payments: any[] }) {
-  const { accent } = useProjectHouse();
+  const { accent } = useTheme();
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>

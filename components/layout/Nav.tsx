@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useTheme, useAuth, useUIActions } from "../providers/ThemeProvider";
 import { Logo, ArrowUpRight } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function Nav() {
-  const { dark, setDark, setSearchOpen, accent, user, setAuthOpen, signOut } = useProjectHouse();
+  const { dark, setDark, accent } = useTheme();
+  const { user, setAuthOpen, signOut } = useAuth();
+  const { setSearchOpen } = useUIActions();
   const [progress, setProgress] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);

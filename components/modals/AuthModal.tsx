@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useTheme, useAuth } from "../providers/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 
 export function AuthModal() {
-  const { authOpen: open, setAuthOpen: onClose, accent } = useProjectHouse();
+  const { accent } = useTheme();
+  const { authOpen: open, setAuthOpen: onClose } = useAuth();
   const supabase = createClient();
 
   useEffect(() => {

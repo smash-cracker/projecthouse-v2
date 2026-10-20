@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useTheme } from "../providers/ThemeProvider";
 import { Logo } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function Footer() {
-  const { accent } = useProjectHouse();
+  const { accent } = useTheme();
   const isMobile = useIsMobile();
 
   return (

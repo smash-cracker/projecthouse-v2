@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { CATEGORIES } from "@/lib/data";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { useProjectHouse } from "@/components/providers/ThemeProvider";
+import { useTheme, useAuth } from "@/components/providers/ThemeProvider";
 import { AbstractPanel, StackPanel } from "@/components/features/ProjectPanels";
 import { createClient } from "@/utils/supabase/client";
 
@@ -182,7 +182,8 @@ export default function ProjectDetailClient({
 }: {
   project: any;
 }) {
-  const { accent, user, purchasedProjectIds } = useProjectHouse();
+  const { accent } = useTheme();
+  const { user, purchasedProjectIds } = useAuth();
   const isMobile = useIsMobile();
   const [tab, setTab] = useState("overview");
   const [payment, setPayment] = useState<Payment | null>(null);

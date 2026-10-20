@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useTheme } from "../providers/ThemeProvider";
 import { ArrowUpRight } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function Contact() {
-  const { accent } = useProjectHouse();
+  const { accent } = useTheme();
   const [copied, setCopied] = useState<string | null>(null);
   const isMobile = useIsMobile();
 

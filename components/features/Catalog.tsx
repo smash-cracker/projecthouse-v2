@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useTheme, useUIActions } from "../providers/ThemeProvider";
 import { useProjects } from "../providers/ProjectsProvider";
 import { CATEGORIES } from "@/lib/data";
 import { ProjectCard, ProjectCardSkeleton } from "./ProjectCard";
@@ -100,7 +100,8 @@ function CustomSelect({ value, onChange, options }: { value: string; onChange: (
 }
 
 export function Catalog() {
-  const { accent, setOpenedProject } = useProjectHouse();
+  const { accent } = useTheme();
+  const { setOpenedProject } = useUIActions();
   const { projects, projectsLoading } = useProjects();
   const [cat, setCat] = useState("all");
   const [sort, setSort] = useState("popular");

@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useTheme, useUI, useUIActions } from "../providers/ThemeProvider";
 
 export function TweakPanel() {
-  const { tweaksVisible: visible, accent, setAccent, setTweaksVisible } = useProjectHouse();
+  const { accent, setAccent } = useTheme();
+  const { tweaksVisible: visible } = useUI();
+  const { setTweaksVisible } = useUIActions();
   const swatches = ["#D7FF3A", "#FF8A5C", "#7CFFD4", "#FFD84D", "#C3B1FF", "#FF6B9A"];
 
   useEffect(() => {

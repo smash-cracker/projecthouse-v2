@@ -1,6 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AppToaster } from "@/components/ui/AppToaster";
 import { TWEAK_DEFAULTS } from "@/lib/data";
 import { createClient } from "@/utils/supabase/client";
@@ -14,29 +22,47 @@ interface User {
   isAdmin: boolean;
 }
 
-interface ProjectHouseState {
+// The app state is split across four contexts so a change to one slice only
+// re-renders the components that actually read it. Before this, every modal
+// toggle produced a new combined context value and re-rendered the whole page
+// (including all catalog cards).
+
+type SetDark = React.Dispatch<React.SetStateAction<boolean>>;
+type SetBoolean = React.Dispatch<React.SetStateAction<boolean>>;
+type SetProject = React.Dispatch<React.SetStateAction<any | null>>;
+
+interface ThemeState {
   dark: boolean;
-  setDark: React.Dispatch<React.SetStateAction<boolean>>;
+  setDark: SetDark;
   accent: string;
   setAccent: (c: string) => void;
-  openedProject: any | null;
-  setOpenedProject: React.Dispatch<React.SetStateAction<any | null>>;
-  searchOpen: boolean;
-  setSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  tweaksVisible: boolean;
-  setTweaksVisible: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+interface AuthState {
   user: User | null;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   authOpen: boolean;
-  setAuthOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  vivaOpen: boolean;
-  setVivaOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setAuthOpen: SetBoolean;
   signOut: () => void;
   purchasedProjectIds: string[];
   refreshPurchases: () => void;
 }
 
-const ProjectHouseContext = createContext<ProjectHouseState | undefined>(undefined);
+interface UIState {
+  openedProject: any | null;
+  searchOpen: boolean;
+  tweaksVisible: boolean;
+}
+
+interface UIActions {
+  setOpenedProject: SetProject;
+  setSearchOpen: SetBoolean;
+  setTweaksVisible: SetBoolean;
+}
+
+const ThemeContext = createContext<ThemeState | undefined>(undefined);
+const AuthContext = createContext<AuthState | undefined>(undefined);
+const UIContext = createContext<UIState | undefined>(undefined);
+const UIActionsContext = createContext<UIActions | undefined>(undefined);
 
 function supabaseUserToUser(sbUser: any): User | null {
   if (!sbUser) return null;
@@ -73,12 +99,11 @@ export function ThemeProvider({
 }) {
   const [dark, setDark] = useState(false);
   const [accent, setAccentState] = useState(TWEAK_DEFAULTS.accent);
-  const [openedProject, setOpenedProject] = useState(null);
+  const [openedProject, setOpenedProject] = useState<any | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [tweaksVisible, setTweaksVisible] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [vivaOpen, setVivaOpen] = useState(false);
   const [purchasedProjectIds, setPurchasedProjectIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -86,11 +111,11 @@ export function ThemeProvider({
     if (saved) setDark(saved === "dark");
   }, []);
 
-  const fetchPurchases = async () => {
+  const fetchPurchases = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase.from("payments").select("project_id");
     setPurchasedProjectIds((data ?? []).map((r: any) => r.project_id).filter(Boolean));
-  };
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -110,8 +135,7 @@ export function ThemeProvider({
     });
 
     return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchPurchases]);
 
   // The root layout's inline script has already applied the saved theme before
   // paint. Skip the first run so hydration doesn't reset it (or rewrite the
@@ -147,52 +171,81 @@ export function ThemeProvider({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const setAccent = (c: string) => {
+  const setAccent = useCallback((c: string) => {
     setAccentState(c);
     try {
       window.parent.postMessage({ type: "__edit_mode_set_keys", edits: { accent: c } }, "*");
     } catch {}
-  };
+  }, []);
 
-  const signOut = () => {
+  const signOut = useCallback(() => {
     const supabase = createClient();
     supabase.auth.signOut();
-  };
+  }, []);
+
+  const themeValue = useMemo<ThemeState>(
+    () => ({ dark, setDark, accent, setAccent }),
+    [dark, accent, setAccent]
+  );
+
+  const authValue = useMemo<AuthState>(
+    () => ({ user, authOpen, setAuthOpen, signOut, purchasedProjectIds, refreshPurchases: fetchPurchases }),
+    [user, authOpen, signOut, purchasedProjectIds, fetchPurchases]
+  );
+
+  const uiValue = useMemo<UIState>(
+    () => ({ openedProject, searchOpen, tweaksVisible }),
+    [openedProject, searchOpen, tweaksVisible]
+  );
+
+  // Setters from useState are stable, so this value never changes.
+  const uiActions = useMemo<UIActions>(
+    () => ({ setOpenedProject, setSearchOpen, setTweaksVisible }),
+    []
+  );
 
   return (
-    <ProjectHouseContext.Provider
-      value={{
-        dark,
-        setDark,
-        accent,
-        setAccent,
-        openedProject,
-        setOpenedProject,
-        searchOpen,
-        setSearchOpen,
-        tweaksVisible,
-        setTweaksVisible,
-        user,
-        setUser,
-        authOpen,
-        setAuthOpen,
-        vivaOpen,
-        setVivaOpen,
-        signOut,
-        purchasedProjectIds,
-        refreshPurchases: fetchPurchases,
-      }}
-    >
-      {children}
-      <AppToaster />
-    </ProjectHouseContext.Provider>
+    <ThemeContext.Provider value={themeValue}>
+      <AuthContext.Provider value={authValue}>
+        <UIContext.Provider value={uiValue}>
+          <UIActionsContext.Provider value={uiActions}>
+            {children}
+            <AppToaster />
+          </UIActionsContext.Provider>
+        </UIContext.Provider>
+      </AuthContext.Provider>
+    </ThemeContext.Provider>
   );
 }
 
-export function useProjectHouse() {
-  const context = useContext(ProjectHouseContext);
+export function useTheme() {
+  const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error("useProjectHouse must be used within a ThemeProvider");
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return context;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within a ThemeProvider");
+  }
+  return context;
+}
+
+export function useUI() {
+  const context = useContext(UIContext);
+  if (context === undefined) {
+    throw new Error("useUI must be used within a ThemeProvider");
+  }
+  return context;
+}
+
+export function useUIActions() {
+  const context = useContext(UIActionsContext);
+  if (context === undefined) {
+    throw new Error("useUIActions must be used within a ThemeProvider");
   }
   return context;
 }

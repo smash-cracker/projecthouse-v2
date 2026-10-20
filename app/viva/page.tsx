@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useProjectHouse } from "@/components/providers/ThemeProvider";
+import { useTheme, useAuth } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { VIVA_TABS } from "@/lib/data";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -524,7 +524,8 @@ function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedPro
 }
 
 export default function VivaPage() {
-  const { accent, user, setAuthOpen } = useProjectHouse();
+  const { accent } = useTheme();
+  const { user, setAuthOpen } = useAuth();
   const isMobile = useIsMobile();
   const [tab, setTab] = useState("ml");
   const [query, setQuery] = useState("");

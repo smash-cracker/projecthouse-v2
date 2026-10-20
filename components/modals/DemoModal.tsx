@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useAuth } from "../providers/ThemeProvider";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
 export function DemoModal({ project, onClose, accent }: { project: any; onClose: () => void; accent: string }) {
-  const { user, setAuthOpen } = useProjectHouse();
+  const { user, setAuthOpen } = useAuth();
   const isMobile = useIsMobile();
 
   const [step, setStep] = useState(0); // 0: picker, 1: confirmed

@@ -1,10 +1,10 @@
 "use client";
 
 import { Toaster } from "sonner";
-import { useProjectHouse } from "@/components/providers/ThemeProvider";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 export function AppToaster() {
-  const { dark } = useProjectHouse();
+  const { dark } = useTheme();
 
   return (
     <Toaster

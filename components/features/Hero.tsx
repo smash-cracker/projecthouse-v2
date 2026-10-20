@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useTheme } from "../providers/ThemeProvider";
 import { useProjects } from "../providers/ProjectsProvider";
 import { ArrowUpRight, Star } from "../ui/icons";
 
@@ -217,7 +217,7 @@ function ThumbCollage({ thumbs, accent }: { thumbs: any[]; accent: string }) {
 }
 
 export function Hero() {
-  const { accent } = useProjectHouse();
+  const { accent } = useTheme();
   const { projects } = useProjects();
   const thumbs = projects.slice(0, 6);
   const updatedLabel = new Date().toLocaleDateString("en-US", { month: "long", year: "2-digit" }).replace(" ", " '");

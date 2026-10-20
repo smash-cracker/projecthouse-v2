@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useProjectHouse } from "@/components/providers/ThemeProvider";
+import { useTheme, useAuth } from "@/components/providers/ThemeProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { VIVA_TABS } from "@/lib/data";
@@ -83,7 +83,8 @@ function NavLink({ label, icon, active, onClick }: { label: string; icon: React.
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
-  const { user, accent } = useProjectHouse();
+  const { accent } = useTheme();
+  const { user } = useAuth();
   const router = useRouter();
   const supabase = createClient();
 

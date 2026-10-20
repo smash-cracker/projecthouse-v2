@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useTheme, useAuth, useUI, useUIActions } from "../providers/ThemeProvider";
 import { CATEGORIES } from "@/lib/data";
 import { ArrowUpRight, Star } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -22,7 +22,10 @@ const Stat = ({ n, l }: { n: number | string; l: string }) => (
 );
 
 export function Drawer() {
-  const { openedProject: project, setOpenedProject, accent, purchasedProjectIds, refreshPurchases, user, setAuthOpen } = useProjectHouse();
+  const { accent } = useTheme();
+  const { user, setAuthOpen, purchasedProjectIds, refreshPurchases } = useAuth();
+  const { openedProject: project } = useUI();
+  const { setOpenedProject } = useUIActions();
   const [tab, setTab] = useState("overview");
   const [demoOpen, setDemoOpen] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState<{ paymentId: string; amount: number } | null>(null);

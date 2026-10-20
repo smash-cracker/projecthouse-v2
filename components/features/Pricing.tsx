@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useProjectHouse } from "../providers/ThemeProvider";
+import { useTheme } from "../providers/ThemeProvider";
 import { ArrowUpRight } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { createClient } from "@/utils/supabase/client";
 
 export function Pricing() {
-  const { accent } = useProjectHouse();
+  const { accent } = useTheme();
   const isMobile = useIsMobile();
   const supabase = createClient();
 
