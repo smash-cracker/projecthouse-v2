@@ -222,7 +222,14 @@ function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedPro
         body: JSON.stringify({ messages: next }),
       });
 
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      if (!res.ok) {
+        let message = `Server error ${res.status}`;
+        try {
+          const data = await res.json();
+          if (typeof data?.error === "string") message = data.error;
+        } catch {}
+        throw new Error(message);
+      }
       if (!res.body) throw new Error("No response body");
 
       const reader = res.body.getReader();
@@ -253,9 +260,23 @@ function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedPro
         updated[updated.length - 1] = { role: "assistant", content: assistantText || "Sorry, I couldn't reach the AI. Please try again shortly." };
         return updated;
       });
-    } catch {
+    } catch (err) {
       setLoading(false);
-      setMessages((prev) => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.";
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        // A stream that failed after the placeholder was added should fill that
+        // bubble instead of leaving an empty one and appending another.
+        if (last?.role === "assistant" && !last.content) {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: message };
+          return updated;
+        }
+        return [...prev, { role: "assistant", content: message }];
+      });
     } finally {
       setLoading(false);
       inputRef.current?.focus();

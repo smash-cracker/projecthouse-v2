@@ -17,6 +17,8 @@ interface RazorpayButtonProps {
   description?: string;
   projectId?: string;
   projectTitle?: string;
+  /** Names of the add-ons selected in the drawer. The server prices these. */
+  addons?: string[];
   /** Customer details for prefill */
   prefill?: { name?: string; email?: string; contact?: string };
   /** Called with verified payment_id on success */
@@ -34,6 +36,7 @@ export default function RazorpayButton({
   description,
   projectId,
   projectTitle,
+  addons = [],
   prefill,
   onSuccess,
   onFailure,
@@ -60,7 +63,12 @@ export default function RazorpayButton({
       const res = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, currency }),
+        body: JSON.stringify({
+          project_id: projectId,
+          addons,
+          amount,
+          currency,
+        }),
       });
 
       const { order, error } = await res.json();
@@ -90,7 +98,7 @@ export default function RazorpayButton({
               ...response,
               project_id: projectId,
               project_title: projectTitle,
-              amount,
+              amount: order.amount,
             }),
           });
           const verifyData = await verifyRes.json();

@@ -336,6 +336,9 @@ export function Drawer() {
                 description={(p as any).title}
                 projectId={(p as any).id}
                 projectTitle={(p as any).title}
+                addons={p_includes
+                  .filter((_, idx) => sel[idx] !== false)
+                  .map((item) => item.name)}
                 onSuccess={(paymentId) => {
                   refreshPurchases();
                   setPaymentSuccess({ paymentId, amount: (customTotal || (p as any).price) * 100 });
