@@ -5,6 +5,7 @@ import { CATEGORIES } from "@/lib/data";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useProjectHouse } from "@/components/providers/ThemeProvider";
 import { AbstractPanel, StackPanel } from "@/components/features/ProjectPanels";
+import { createClient } from "@/utils/supabase/client";
 
 const PUBLIC_TABS = [
   { id: "overview",  label: "What you get" },
@@ -169,19 +170,51 @@ function FileTree({ project }: { project: any }) {
   );
 }
 
+type Payment = {
+  id: string;
+  created_at: string;
+  amount: number;
+  razorpay_payment_id: string;
+};
+
 export default function ProjectDetailClient({
   project: p,
-  payment,
 }: {
   project: any;
-  payment: { id: string; created_at: string; amount: number; razorpay_payment_id: string } | null;
 }) {
-  const { accent } = useProjectHouse();
+  const { accent, user, purchasedProjectIds } = useProjectHouse();
   const isMobile = useIsMobile();
   const [tab, setTab] = useState("overview");
+  const [payment, setPayment] = useState<Payment | null>(null);
+
+  // Purchases are per-user, so the receipt is fetched here rather than in the
+  // cached page. RLS limits the query to the signed-in user's own rows.
+  useEffect(() => {
+    if (!user) {
+      setPayment(null);
+      return;
+    }
+
+    let cancelled = false;
+    const supabase = createClient();
+
+    supabase
+      .from("payments")
+      .select("id, created_at, amount, razorpay_payment_id")
+      .eq("project_id", p.id)
+      .limit(1)
+      .then(({ data }) => {
+        if (!cancelled) setPayment((data?.[0] as Payment | undefined) ?? null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [p.id, user]);
+
   const cat = CATEGORIES.find((c) => c.id === p.cat);
   const ab = p.abstract || { objective: p.description, methodology: "", results: "", keywords: p.stack?.join(", ") ?? "" };
-  const hasPurchased = payment !== null;
+  const hasPurchased = payment !== null || purchasedProjectIds.includes(p.id);
   const paidDate = payment
     ? new Date(payment.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
     : null;

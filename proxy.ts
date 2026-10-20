@@ -39,12 +39,11 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   // Only routes that read or refresh the Supabase session server-side.
-  // Public pages (/, /viva, etc.) skip the auth round-trip entirely and can
-  // be statically served.
+  // Public pages (/, /viva, /projects/[id], etc.) skip the auth round-trip
+  // entirely and can be statically served.
   matcher: [
     '/admin/:path*',
     '/my-projects/:path*',
-    '/projects/:path*',
     '/api/bookings/:path*',
     '/api/razorpay/:path*',
   ],

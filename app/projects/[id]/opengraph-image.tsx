@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -29,6 +28,8 @@ export default async function ProjectOgImage({ params }: Props) {
         apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
       },
+      // Cache the lookup so repeat crawler hits don't re-query for the same card.
+      next: { revalidate: 3600 },
     });
     const rows = await res.json();
     if (rows?.[0]) {

@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+// Node runtime (the default) lets Next render this once at build time and
+// serve the PNG as a static asset; the edge runtime disables that.
 export const alt = "Project House — Ready-made capstone projects for students";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

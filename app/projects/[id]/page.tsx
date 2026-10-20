@@ -1,20 +1,42 @@
 import type { Metadata } from "next";
-import { createClient } from "@/utils/supabase/server";
+import { cache } from "react";
 import { notFound } from "next/navigation";
+import { createPublicClient } from "@/utils/supabase/public";
 import ProjectDetailClient from "./ProjectDetailClient";
 
 type Props = { params: Promise<{ id: string }> };
 
+// Project pages are public, so they don't need the user's session. Reading
+// them with a cookieless client keeps the route cacheable (ISR) instead of
+// dynamic, and `cache()` lets generateMetadata and the page share one query.
+export const revalidate = 300;
+
+const getProject = cache(async (id: string) => {
+  const supabase = createPublicClient();
+
+  const { data } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  return data;
+});
+
+// Pre-render the current catalog at build time; projects added later are
+// generated on demand and then cached like the rest.
+export async function generateStaticParams() {
+  const supabase = createPublicClient();
+
+  const { data } = await supabase.from("projects").select("id");
+
+  return (data ?? []).map((p) => ({ id: p.id }));
+}
+
 // ─── SEO metadata ────────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const supabase = await createClient();
-
-  const { data: project } = await supabase
-    .from("projects")
-    .select("title, description, cat, stack")
-    .eq("id", id)
-    .single();
+  const project = await getProject(id);
 
   if (!project) return {};
 
@@ -50,39 +72,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function ProjectDetailPage({ params }: Props) {
   const { id } = await params;
-  const supabase = await createClient();
 
   // The project is publicly visible — no auth required.
-  const { data: project } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const project = await getProject(id);
 
   if (!project) notFound();
-
-  // Check if the current user has purchased this project (optional).
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let payment: {
-    id: string;
-    created_at: string;
-    amount: number;
-    razorpay_payment_id: string;
-  } | null = null;
-
-  if (user) {
-    const { data } = await supabase
-      .from("payments")
-      .select("id, created_at, amount, razorpay_payment_id")
-      .eq("project_id", id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    payment = data ?? null;
-  }
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -116,7 +110,7 @@ export default async function ProjectDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProjectDetailClient project={project} payment={payment} />
+      <ProjectDetailClient project={project} />
     </>
   );
 }
