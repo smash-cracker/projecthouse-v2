@@ -11,13 +11,13 @@ import { SearchPalette } from "@/components/modals/SearchPalette";
 import { TweakPanel } from "@/components/modals/TweakPanel";
 import { AuthModal } from "@/components/modals/AuthModal";
 
-export default function HomeClient() {
+export default function HomeClient({ bundles }: { bundles: any[] }) {
   return (
     <>
       <Nav />
       <Hero />
       <Catalog />
-      <Pricing />
+      <Pricing bundles={bundles} />
       <Contact />
       <Footer />
       <Drawer />

@@ -1,0 +1,835 @@
+"use client";
+
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
+import { useTheme, useAuth } from "@/components/providers/ThemeProvider";
+import { createClient } from "@/utils/supabase/client";
+import { VIVA_TABS } from "@/lib/data";
+import { useIsMobile } from "@/hooks/useIsMobile";
+
+type VivaRow = { id: string; question: string; answer: string; order_index: number; cat: string };
+type PurchasedProject = { id: string; title: string; cat: string };
+
+type Message = { role: "user" | "assistant"; content: string };
+
+const SUGGESTIONS = [
+  "How do I explain my model's accuracy to the panel?",
+  "What is overfitting and how did you handle it?",
+  "Explain bias-variance tradeoff simply",
+  "How does backpropagation work?",
+  "What questions are asked for MERN projects?",
+];
+
+function BotText({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <>
+      {lines.map((line, li) => {
+        const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+        return (
+          <React.Fragment key={li}>
+            {parts.map((part, pi) => {
+              if (part.startsWith("**") && part.endsWith("**"))
+                return <strong key={pi}>{part.slice(2, -2)}</strong>;
+              if (part.startsWith("`") && part.endsWith("`"))
+                return (
+                  <code key={pi} style={{
+                    fontFamily: "JetBrains Mono, monospace", fontSize: "0.88em",
+                    background: "var(--paper-2)", borderRadius: 4, padding: "1px 5px",
+                  }}>{part.slice(1, -1)}</code>
+                );
+              return <React.Fragment key={pi}>{part}</React.Fragment>;
+            })}
+            {li < lines.length - 1 && <br />}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+}
+
+const BotAvatar = ({ accent }: { accent: string }) => (
+  <div style={{
+    width: 32, height: 32, borderRadius: 10, background: accent,
+    display: "grid", placeItems: "center", flexShrink: 0,
+  }}>
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+      <rect x="3" y="6" width="14" height="10" rx="3" fill="var(--accent-ink)" opacity=".15" stroke="var(--accent-ink)" strokeWidth="1.4"/>
+      <circle cx="7.5" cy="11" r="1.2" fill="var(--accent-ink)"/>
+      <circle cx="12.5" cy="11" r="1.2" fill="var(--accent-ink)"/>
+      <path d="M7 6V4.5a3 3 0 016 0V6" stroke="var(--accent-ink)" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  </div>
+);
+
+const UserAvatar = () => (
+  <div style={{
+    width: 32, height: 32, borderRadius: 10, background: "var(--ink)",
+    display: "grid", placeItems: "center", flexShrink: 0,
+  }}>
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="7" r="3.2" fill="var(--paper)" opacity=".9"/>
+      <path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="var(--paper)" strokeWidth="1.4" strokeLinecap="round" opacity=".9"/>
+    </svg>
+  </div>
+);
+
+const TypingDots = () => (
+  <span style={{ display: "inline-flex", gap: 5, alignItems: "center", padding: "2px 0" }}>
+    {[0, 1, 2].map((i) => (
+      <span key={i} style={{
+        width: 7, height: 7, borderRadius: "50%", background: "var(--muted)",
+        display: "inline-block",
+        animation: `chatDot 1.2s ${i * 0.2}s ease-in-out infinite`,
+      }} />
+    ))}
+  </span>
+);
+
+function ProjectPicker({
+  projects,
+  activeIdx,
+  accent,
+  onSelect,
+}: {
+  projects: PurchasedProject[];
+  activeIdx: number;
+  accent: string;
+  onSelect: (p: PurchasedProject) => void;
+}) {
+  if (projects.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        position: "absolute", bottom: "100%", left: 0, right: 0,
+        marginBottom: 8, zIndex: 50,
+        background: "var(--card)", border: "1px solid var(--line)",
+        borderRadius: 12, overflow: "hidden",
+        boxShadow: "0 8px 32px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08)",
+        animation: "pickerIn .15s ease",
+      }}
+    >
+      <div style={{
+        padding: "8px 14px 6px",
+        fontSize: 10, color: "var(--muted)",
+        letterSpacing: ".1em", textTransform: "uppercase",
+        fontFamily: "var(--font-jetbrains-mono, monospace)",
+        borderBottom: "1px solid var(--line)",
+      }}>
+        Your projects — type to filter
+      </div>
+      {projects.map((p, i) => (
+        <button
+          key={p.id}
+          onMouseDown={(e) => { e.preventDefault(); onSelect(p); }}
+          style={{
+            width: "100%", padding: "10px 14px",
+            background: i === activeIdx ? accent + "22" : "transparent",
+            border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 10,
+            transition: "background .1s",
+            borderLeft: i === activeIdx ? `3px solid ${accent}` : "3px solid transparent",
+          }}
+        >
+          <span style={{
+            width: 28, height: 28, borderRadius: 8,
+            background: i === activeIdx ? accent : "var(--line)",
+            color: i === activeIdx ? "var(--accent-ink)" : "var(--muted)",
+            display: "grid", placeItems: "center",
+            fontFamily: "var(--font-jetbrains-mono, monospace)",
+            fontSize: 9, fontWeight: 700, flexShrink: 0,
+            transition: "background .1s, color .1s",
+          }}>
+            {p.title.slice(0, 2).toUpperCase()}
+          </span>
+          <span style={{
+            fontSize: 13, color: "var(--ink)", fontFamily: "inherit",
+            textAlign: "left", lineHeight: 1.4,
+          }}>
+            {p.title}
+          </span>
+        </button>
+      ))}
+      <style>{`
+        @keyframes pickerIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function ChatPanel({ accent, purchasedProjects }: { accent: string; purchasedProjects: PurchasedProject[] }) {
+  const isMobile = useIsMobile();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  // Context project injected via @-mention
+  const [contextProject, setContextProject] = useState<PurchasedProject | null>(null);
+  // @ picker state
+  const [atQuery, setAtQuery] = useState<string | null>(null); // null = picker closed
+  const [atStart, setAtStart] = useState<number>(0); // index of the @ character in input
+  const [pickerIdx, setPickerIdx] = useState(0);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const pickerProjects = atQuery !== null
+    ? (atQuery ? purchasedProjects.filter((p) => p.title.toLowerCase().includes(atQuery.toLowerCase())) : purchasedProjects)
+    : [];
+  const safePickerIdx = pickerProjects.length > 0 ? Math.min(pickerIdx, pickerProjects.length - 1) : 0;
+
+  const selectProject = useCallback((p: PurchasedProject) => {
+    setContextProject(p);
+    setInput((prev) => prev.slice(0, atStart));
+    setAtQuery(null);
+    setPickerIdx(0);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, [atStart]);
+
+  const clearContext = () => {
+    setContextProject(null);
+  };
+
+  const send = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || loading) return;
+
+    // Prepend hidden project context if one is selected
+    const contextPrefix = contextProject
+      ? `[Project: "${contextProject.title}" — id: ${contextProject.id}]\n\n`
+      : "";
+    const userPayload = contextPrefix + trimmed;
+
+    const userMsg: Message = { role: "user", content: userPayload };
+    const next = [...messages, userMsg];
+    setMessages(next);
+    setInput("");
+    if (inputRef.current) inputRef.current.style.height = "auto";
+    setLoading(true);
+    // Keep context sticky across the conversation — don't clear it
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: next }),
+      });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      if (!res.body) throw new Error("No response body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantText = "";
+
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      setLoading(false);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        if (chunk.startsWith("__ERROR__:")) {
+          assistantText = "Sorry, I couldn't reach the AI. Please try again shortly.";
+          break;
+        }
+        assistantText += chunk;
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: "assistant", content: assistantText };
+          return updated;
+        });
+      }
+
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: "assistant", content: assistantText || "Sorry, I couldn't reach the AI. Please try again shortly." };
+        return updated;
+      });
+    } catch {
+      setLoading(false);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Something went wrong. Please try again." }]);
+    } finally {
+      setLoading(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setInput(val);
+
+    const cursor = e.target.selectionStart ?? val.length;
+    const textUpToCursor = val.slice(0, cursor);
+    const atMatch = textUpToCursor.match(/(?:^|\s)@([^\s]*)$/);
+    if (atMatch) {
+      const query = atMatch[1];
+      setAtQuery(query);
+      setAtStart(textUpToCursor.lastIndexOf("@"));
+      setPickerIdx(0);
+    } else {
+      setAtQuery(null);
+    }
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (atQuery !== null && pickerProjects.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setPickerIdx((i) => (i + 1) % pickerProjects.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setPickerIdx((i) => (i - 1 + pickerProjects.length) % pickerProjects.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        selectProject(pickerProjects[safePickerIdx]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setAtQuery(null);
+        return;
+      }
+    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); }
+  };
+
+  const isEmpty = messages.length === 0;
+  const pickerOpen = atQuery !== null && purchasedProjects.length > 0;
+
+  // Display messages, stripping hidden project prefix from user bubbles
+  const displayMessages = messages.map((msg) => ({
+    ...msg,
+    displayContent: msg.role === "user"
+      ? msg.content.replace(/^\[Project:[^\]]+\]\n\n/, "")
+      : msg.content,
+  }));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div
+        className="scroll"
+        style={{
+          flex: 1, overflowY: "auto",
+          padding: isEmpty ? "0" : isMobile ? "16px 12px 8px" : "28px 32px 12px",
+          display: "flex", flexDirection: "column", gap: 24,
+        }}
+      >
+        {isEmpty && (
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center",
+            justifyContent: "center", height: "100%", gap: 20, padding: isMobile ? "20px 16px" : "32px",
+          }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 20, background: accent,
+              display: "grid", placeItems: "center", boxShadow: `0 8px 24px ${accent}55`,
+            }}>
+              <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="6" width="14" height="10" rx="3" fill="var(--accent-ink)" opacity=".15" stroke="var(--accent-ink)" strokeWidth="1.4"/>
+                <circle cx="7.5" cy="11" r="1.4" fill="var(--accent-ink)"/>
+                <circle cx="12.5" cy="11" r="1.4" fill="var(--accent-ink)"/>
+                <path d="M7 6V4.5a3 3 0 016 0V6" stroke="var(--accent-ink)" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-.01em" }}>Project Bot</div>
+              <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6, lineHeight: 1.6, maxWidth: 340 }}>
+                Ask me anything about your project — methodology, results, or how to handle tough viva questions.
+                {purchasedProjects.length > 0 && (
+                  <><br/><span style={{ color: accent, fontWeight: 600 }}>Tip:</span> Type <code style={{ fontFamily: "monospace", background: "var(--line)", padding: "1px 5px", borderRadius: 4 }}>@</code> to focus on a specific project.</>  
+                )}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: isMobile ? "100%" : 420 }}>
+              <div className="mono" style={{ fontSize: 10, color: "var(--muted)", letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 2 }}>
+                Try asking
+              </div>
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => send(s)}
+                  style={{
+                    padding: "11px 16px", borderRadius: 10,
+                    border: "1px solid var(--line)", background: "var(--card)",
+                    color: "var(--ink)", fontFamily: "inherit", fontSize: 13,
+                    cursor: "pointer", textAlign: "left", display: "flex",
+                    alignItems: "center", justifyContent: "space-between", gap: 8,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = accent; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line)"; }}
+                >
+                  {s}
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, color: "var(--muted)" }}>
+                    <path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {displayMessages.map((msg, i) => {
+          const isUser = msg.role === "user";
+          const isStreaming = !isUser && i === displayMessages.length - 1 && msg.content === "" && loading;
+          return (
+            <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: isUser ? "row-reverse" : "row" }}>
+              {isUser ? <UserAvatar /> : <BotAvatar accent={accent} />}
+              <div style={{ maxWidth: isMobile ? "88%" : "75%", display: "flex", flexDirection: "column", gap: 4, alignItems: isUser ? "flex-end" : "flex-start" }}>
+                <div className="mono" style={{ fontSize: 10, color: "var(--muted)", letterSpacing: ".08em", textTransform: "uppercase", paddingInline: 4 }}>
+                  {isUser ? "You" : "Project Bot"}
+                </div>
+                <div style={{
+                  padding: "13px 17px",
+                  borderRadius: isUser ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
+                  background: isUser ? "var(--ink)" : "var(--card)",
+                  color: isUser ? "var(--paper)" : "var(--ink)",
+                  border: isUser ? "none" : "1px solid var(--line)",
+                  fontSize: 14, lineHeight: 1.7,
+                  boxShadow: isUser ? "0 2px 8px rgba(0,0,0,.12)" : "0 1px 4px rgba(0,0,0,.06)",
+                }}>
+                  {isStreaming
+                    ? <TypingDots />
+                    : isUser
+                      ? <span style={{ whiteSpace: "pre-wrap" }}>{msg.displayContent}</span>
+                      : <BotText text={msg.displayContent} />
+                  }
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {loading && displayMessages[displayMessages.length - 1]?.role === "user" && (
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <BotAvatar accent={accent} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div className="mono" style={{ fontSize: 10, color: "var(--muted)", letterSpacing: ".08em", textTransform: "uppercase", paddingInline: 4 }}>Project Bot</div>
+              <div style={{ padding: "13px 17px", borderRadius: "4px 16px 16px 16px", background: "var(--card)", border: "1px solid var(--line)", boxShadow: "0 1px 4px rgba(0,0,0,.06)" }}>
+                <TypingDots />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      <div style={{ borderTop: "1px solid var(--line)", padding: isMobile ? "10px 12px" : "14px 20px", background: "var(--paper)" }}>
+
+        {/* Active context chip */}
+        {contextProject && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, marginBottom: 8,
+            padding: "5px 10px", borderRadius: 8,
+            background: accent + "18", border: `1px solid ${accent}33`,
+            width: "fit-content", maxWidth: "100%",
+          }}>
+            <span style={{ fontSize: 11, color: accent, fontWeight: 600 }}>
+              @{contextProject.title}
+            </span>
+            <button
+              onClick={clearContext}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: accent, fontSize: 14, lineHeight: 1, padding: 0,
+                display: "grid", placeItems: "center",
+              }}
+              aria-label="Remove project context"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Input row — position:relative so picker can anchor to it */}
+        <div ref={inputWrapRef} style={{ position: "relative" }}>
+          {pickerOpen && (
+            <ProjectPicker
+              projects={purchasedProjects}
+              activeIdx={safePickerIdx}
+              accent={accent}
+              onSelect={selectProject}
+            />
+          )}
+          <div style={{
+            display: "flex", gap: 10, alignItems: "flex-end",
+            background: "var(--card)", border: `1px solid ${pickerOpen ? accent : "var(--line)"}`,
+            borderRadius: 14, padding: "8px 8px 8px 16px",
+            transition: "border-color .15s",
+          }}>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={handleChange}
+              onKeyDown={onKeyDown}
+              placeholder={purchasedProjects.length > 0 ? "Type @ to select a project, or ask anything…" : "Ask about your project or viva prep…"}
+              rows={1}
+              style={{
+                flex: 1, resize: "none", border: "none", outline: "none",
+                background: "transparent", color: "var(--ink)",
+                fontSize: 14, fontFamily: "inherit", lineHeight: 1.55,
+                maxHeight: 120, overflowY: "auto", padding: "4px 0",
+              }}
+              onInput={(e) => {
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 120) + "px";
+              }}
+            />
+            <button
+              onClick={() => send(input)}
+              disabled={!input.trim() || loading}
+              style={{
+                width: 36, height: 36, borderRadius: 9, border: "none", flexShrink: 0,
+                background: input.trim() && !loading ? accent : "var(--line)",
+                color: input.trim() && !loading ? "var(--accent-ink)" : "var(--muted)",
+                cursor: input.trim() && !loading ? "pointer" : "default",
+                display: "grid", placeItems: "center",
+                transition: "background .15s, color .15s",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 7h12M8 2l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {!isMobile && (
+          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7, paddingInline: 4 }}>
+            Enter to send · Shift+Enter for new line{purchasedProjects.length > 0 ? " · @ to tag a project" : ""}
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes chatDot {
+          0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+          40% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export default function VivaClient({ initialQa }: { initialQa: VivaRow[] }) {
+  const { accent } = useTheme();
+  const { user, setAuthOpen } = useAuth();
+  const isMobile = useIsMobile();
+  const [tab, setTab] = useState("ml");
+  const [query, setQuery] = useState("");
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [rows, setRows] = useState<VivaRow[]>(() => initialQa.filter((r) => r.cat === "ml"));
+  // Rendered on the server and passed in; the default tab is populated above
+  // so the first paint already contains the questions.
+  const allRows = initialQa;
+  const [purchasedProjects, setPurchasedProjects] = useState<PurchasedProject[]>([]);
+
+  // Fetch purchased projects for the @-mention picker
+  useEffect(() => {
+    if (!user) { setPurchasedProjects([]); return; }
+    const supabase = createClient();
+    async function fetchPurchased() {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) { setPurchasedProjects([]); return; }
+      const { data } = await supabase
+        .from("payments")
+        .select("project_id, projects(id, title, cat)")
+        .eq("user_id", authUser.id);
+      const projects: PurchasedProject[] = (data ?? [])
+        .map((row: any) => row.projects)
+        .filter(Boolean);
+      setPurchasedProjects(projects);
+    }
+    fetchPurchased();
+  }, [user]);
+
+  useEffect(() => {
+    setRows(allRows.filter((r: any) => r.cat === tab));
+    setOpenIdx(null);
+  }, [tab, allRows]);
+
+  const switchTab = (id: string) => { setTab(id); setQuery(""); };
+
+  const isBot = tab === "bot";
+  const q = query.trim().toLowerCase();
+  const items: VivaRow[] = q
+    ? allRows.filter((r: any) => r.question.toLowerCase().includes(q) || r.answer.toLowerCase().includes(q))
+    : rows;
+  const isSearching = q.length > 0;
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", flexDirection: "column" }}>
+
+      {/* Header */}
+      <div style={{
+        borderBottom: "1px solid var(--line)",
+        padding: isMobile ? "0 16px" : "0 28px",
+        display: "flex", alignItems: "center", gap: isMobile ? 8 : 16,
+        height: 64, flexShrink: 0,
+        background: "var(--card)", position: "sticky", top: 0, zIndex: 10,
+      }}>
+        <Link
+          href="/"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 34, height: 34, borderRadius: 9,
+            border: "1px solid var(--line)", background: "var(--paper-2)",
+            textDecoration: "none", color: "var(--ink)", flexShrink: 0,
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 2L3 7l6 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </Link>
+
+        {!isMobile && <span style={{ fontWeight: 700, fontSize: 16 }}>Viva Prep</span>}
+
+        {!isBot && (
+          <div style={{
+            flex: 1, maxWidth: 480, minWidth: 0,
+            display: "flex", alignItems: "center", gap: 10,
+            background: "var(--paper-2)", border: "1px solid var(--line)",
+            borderRadius: 10, padding: "9px 14px",
+          }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, color: "var(--muted)" }}>
+              <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <input
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setOpenIdx(null); }}
+              placeholder={isMobile ? "Search..." : "Search all questions…"}
+              style={{ flex: 1, border: "none", outline: "none", background: "transparent", color: "var(--ink)", fontSize: 14, fontFamily: "inherit", minWidth: 0 }}
+            />
+            {query && (
+              <button onClick={() => setQuery("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile tab strip */}
+      {isMobile && (
+        <div style={{ borderBottom: "1px solid var(--line)", overflowX: "auto", display: "flex", gap: 4, padding: "8px 12px", flexShrink: 0, whiteSpace: "nowrap" }}>
+          {[...VIVA_TABS, { id: "bot", label: "Ask Bot", icon: "🤖" }].map((t) => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => switchTab(t.id)}
+                style={{
+                  padding: "7px 12px", borderRadius: 999, border: "none", flexShrink: 0,
+                  background: active ? accent : "var(--card)",
+                  color: active ? "var(--accent-ink)" : "var(--ink)",
+                  fontFamily: "inherit", fontSize: 13, fontWeight: active ? 600 : 400,
+                  cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
+                }}
+              >
+                <span>{t.icon}</span>
+                <span>{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+
+        {/* Sidebar — desktop */}
+        {!isMobile && (
+          <div style={{
+            width: 220, borderRight: "1px solid var(--line)",
+            padding: "16px 12px", display: "flex", flexDirection: "column", gap: 4,
+            flexShrink: 0, overflowY: "auto",
+            position: "sticky", top: 64, height: "calc(100vh - 64px)",
+          }}>
+            {VIVA_TABS.map((t) => {
+              const active = tab === t.id;
+              const count = allRows.filter((r: any) => r.cat === t.id).length;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => switchTab(t.id)}
+                  style={{
+                    width: "100%", padding: "10px 12px", borderRadius: 10, border: "none",
+                    background: active ? accent : "transparent",
+                    color: active ? "var(--accent-ink)" : "var(--ink)",
+                    fontFamily: "inherit", fontSize: 13, fontWeight: active ? 600 : 400,
+                    cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 9,
+                    transition: "background .15s",
+                  }}
+                >
+                  <span style={{ fontSize: 16 }}>{t.icon}</span>
+                  <span style={{ flex: 1 }}>{t.label}</span>
+                  <span style={{ fontSize: 11, opacity: 0.6 }}>{count}</span>
+                </button>
+              );
+            })}
+
+            <div style={{ height: 1, background: "var(--line)", margin: "8px 4px" }} />
+
+            <button
+              onClick={() => switchTab("bot")}
+              style={{
+                width: "100%", padding: "10px 12px", borderRadius: 10, border: "none",
+                background: tab === "bot" ? accent : "transparent",
+                color: tab === "bot" ? "var(--accent-ink)" : "var(--ink)",
+                fontFamily: "inherit", fontSize: 13, fontWeight: tab === "bot" ? 600 : 400,
+                cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 9,
+                transition: "background .15s",
+              }}
+            >
+              <span style={{ fontSize: 16 }}>🤖</span>
+              <span style={{ flex: 1 }}>Ask Project Bot</span>
+              <span style={{
+                fontSize: 9, padding: "2px 6px", borderRadius: 4,
+                background: tab === "bot" ? "rgba(255,255,255,.25)" : accent,
+                color: "var(--accent-ink)",
+                fontWeight: 600, letterSpacing: ".05em",
+              }}>AI</span>
+            </button>
+          </div>
+        )}
+
+        {/* Content */}
+        {isBot ? (
+          <div style={{ flex: 1, overflow: "hidden", height: "calc(100vh - 64px)" }}>
+            {!user ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: 32, textAlign: "center" }}>
+                <div style={{ width: 64, height: 64, borderRadius: 20, background: accent, display: "grid", placeItems: "center", boxShadow: `0 8px 24px ${accent}55`, marginBottom: 20 }}>
+                  <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
+                    <rect x="3" y="6" width="14" height="10" rx="3" fill="var(--accent-ink)" opacity=".15" stroke="var(--accent-ink)" strokeWidth="1.4"/>
+                    <circle cx="7.5" cy="11" r="1.4" fill="var(--accent-ink)"/>
+                    <circle cx="12.5" cy="11" r="1.4" fill="var(--accent-ink)"/>
+                    <path d="M7 6V4.5a3 3 0 016 0V6" stroke="var(--accent-ink)" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-.01em" }}>Sign in to Ask Bot</div>
+                <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 6, lineHeight: 1.6, maxWidth: 320, marginBottom: 24 }}>
+                  Ask me anything about your project — methodology, results, or how to handle tough viva questions.
+                </div>
+                <button
+                  onClick={() => setAuthOpen(true)}
+                  style={{
+                    padding: "10px 24px", borderRadius: 999, border: "none",
+                    background: accent, color: "var(--accent-ink)",
+                    fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                >
+                  Sign In to Continue
+                </button>
+              </div>
+            ) : (
+              <ChatPanel accent={accent} purchasedProjects={purchasedProjects} />
+            )}
+          </div>
+        ) : (
+          <div className="scroll" style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px" : "24px 32px" }}>
+            {isSearching && (
+              <div style={{ marginBottom: 20, fontSize: 13, color: "var(--muted)" }}>
+                {items.length} result{items.length !== 1 ? "s" : ""} for <strong style={{ color: "var(--ink)" }}>"{query}"</strong>
+              </div>
+            )}
+
+            {items.length === 0 && isSearching && (
+              <div style={{ textAlign: "center", padding: "80px 0", color: "var(--muted)" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>🤔</div>
+                <div style={{ fontSize: 15, fontWeight: 500 }}>No questions match "{query}"</div>
+                <div style={{ fontSize: 13, marginTop: 6 }}>Try different keywords or clear the search.</div>
+              </div>
+            )}
+            {items.length === 0 && !isSearching && (
+              <div style={{ textAlign: "center", padding: "80px 0", color: "var(--muted)" }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+                <div style={{ fontSize: 15, fontWeight: 500 }}>No questions yet</div>
+                <div style={{ fontSize: 13, marginTop: 6 }}>Please check out again later.</div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: "100%" }}>
+              {items.map((item, i) => {
+                const isOpen = openIdx === i;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      border: "1px solid var(--line)", borderRadius: 12, overflow: "hidden",
+                      background: "var(--card)",
+                      boxShadow: isOpen ? `0 0 0 2px ${accent}55` : "none",
+                      transition: "box-shadow .15s",
+                    }}
+                  >
+                    <button
+                      onClick={() => setOpenIdx(isOpen ? null : i)}
+                      style={{
+                        width: "100%", padding: "16px 20px", display: "flex", alignItems: "center",
+                        justifyContent: "space-between", gap: 16, background: "transparent", border: "none",
+                        cursor: "pointer", fontFamily: "inherit", fontSize: 14, fontWeight: 500,
+                        color: "var(--ink)", textAlign: "left",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span className="mono" style={{
+                          fontSize: 10,
+                          background: isOpen ? accent : "var(--line)",
+                          color: isOpen ? "var(--accent-ink)" : "var(--muted)",
+                          padding: "2px 7px", borderRadius: 5, flexShrink: 0, transition: "all .15s",
+                        }}>Q{i + 1}</span>
+                        {item.question}
+                      </div>
+                      <span style={{
+                        width: 24, height: 24, borderRadius: "50%",
+                        background: isOpen ? accent : "var(--line)",
+                        display: "grid", placeItems: "center", flexShrink: 0,
+                        transition: "background .15s, transform .15s",
+                        transform: isOpen ? "rotate(45deg)" : "rotate(0)",
+                      }}>
+                        <svg width="9" height="9" viewBox="0 0 10 10">
+                          <path d="M5 1v8M1 5h8" stroke={isOpen ? "var(--accent-ink)" : "var(--ink)"} strokeWidth="1.8" strokeLinecap="round" />
+                        </svg>
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div style={{ padding: "0 20px 16px", display: "flex", gap: 12, alignItems: "start", borderTop: "1px solid var(--line)" }}>
+                        <span className="mono" style={{ fontSize: 10, background: "var(--paper)", color: "var(--muted)", padding: "2px 7px", borderRadius: 5, flexShrink: 0, marginTop: 14 }}>ANS</span>
+                        <p style={{ margin: "12px 0 0", fontSize: 14, color: "var(--muted)", lineHeight: 1.75 }}>{item.answer}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {!isSearching && (
+              <div style={{ marginTop: 32, padding: "18px 22px", border: "1px dashed var(--line)", borderRadius: 12, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: "space-between", maxWidth: "100%" }}>
+                <div style={{ fontSize: 13, color: "var(--muted)" }}>
+                  <span style={{ fontWeight: 600, color: "var(--ink)" }}>Want project-specific prep?</span> Every purchase includes a viva Q&amp;A guide tailored to your exact implementation.
+                </div>
+                <Link
+                  href="/#catalog"
+                  style={{ padding: "10px 18px", borderRadius: 999, background: accent, color: "var(--accent-ink)", textDecoration: "none", fontSize: 13, fontWeight: 500, flexShrink: 0 }}
+                >
+                  Browse projects →
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

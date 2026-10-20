@@ -1,39 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useTheme } from "../providers/ThemeProvider";
 import { ArrowUpRight } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
-import { createClient } from "@/utils/supabase/client";
 
-export function Pricing() {
+export function Pricing({ bundles }: { bundles: any[] }) {
   const { accent } = useTheme();
   const isMobile = useIsMobile();
-  const supabase = createClient();
 
-  const [bundles, setBundles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchBundles() {
-      try {
-        const { data, error } = await supabase
-          .from("bundles")
-          .select("*")
-          .order("price", { ascending: true });
-        
-        if (error) throw error;
-        setBundles(data || []);
-      } catch (err) {
-        console.error("Error fetching bundles:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchBundles();
-  }, []);
-
-  if (loading) return null; // Or a skeleton
   if (bundles.length === 0) return null;
 
   return (
