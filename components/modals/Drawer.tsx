@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useTheme, useAuth, useUI, useUIActions } from "../providers/ThemeProvider";
 import { CATEGORIES } from "@/lib/data";
 import { ArrowUpRight, Star } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import { createClient } from "@/utils/supabase/client";
 
 import { DemoModal } from "./DemoModal";
 import { PaymentSuccessModal } from "./PaymentSuccessModal";
@@ -25,7 +26,7 @@ const Stat = ({ n, l }: { n: number | string; l: string }) => (
 export function Drawer() {
   const { accent } = useTheme();
   const { user, setAuthOpen, purchasedProjectIds, refreshPurchases } = useAuth();
-  const { openedProject: project } = useUI();
+  const { openedProject } = useUI();
   const { setOpenedProject } = useUIActions();
   const [tab, setTab] = useState("overview");
   const [demoOpen, setDemoOpen] = useState(false);
@@ -33,6 +34,36 @@ export function Drawer() {
   const [paymentFailure, setPaymentFailure] = useState<{ description?: string } | null>(null);
   const [sel, setSel] = useState<Record<number, boolean>>({});
   const isMobile = useIsMobile();
+
+  // The catalog payload only carries the fields it renders. Load the heavier
+  // per-project content the panels need once the drawer actually opens.
+  const [detail, setDetail] = useState<{ abstract?: any; stack_detail?: any } | null>(null);
+
+  useEffect(() => {
+    if (!openedProject) {
+      setDetail(null);
+      return;
+    }
+
+    let cancelled = false;
+    createClient()
+      .from("projects")
+      .select("abstract, stack_detail")
+      .eq("id", openedProject.id)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) setDetail(data ?? null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [openedProject]);
+
+  const project = useMemo(
+    () => (openedProject ? { ...openedProject, ...(detail ?? {}) } : null),
+    [openedProject, detail]
+  );
 
   const p_includes: { name: string; price: number }[] = (project as any)?.includes ?? [];
   const toggleAddon = (idx: number) => {
@@ -44,7 +75,7 @@ export function Drawer() {
   const selCount = p_includes.filter((item, idx) => item.price > 0 && sel[idx] !== false).length;
 
   useEffect(() => {
-    if (!project) {
+    if (!openedProject) {
       setDemoOpen(false);
       setSel({});
       return;
@@ -58,7 +89,7 @@ export function Drawer() {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", onKey);
     };
-  }, [project, setOpenedProject]);
+  }, [openedProject, setOpenedProject]);
 
   if (!project) return null;
   const p = project;
