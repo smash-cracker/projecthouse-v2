@@ -6,25 +6,74 @@ import { useTheme, useAuth, useUIActions } from "../providers/ThemeProvider";
 import { Logo, ArrowUpRight } from "../ui/icons";
 import { useIsMobile } from "../../hooks/useIsMobile";
 
+function ScrollProgress({ accent }: { accent: string }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    // Scroll fires far more often than the screen repaints; coalesce updates
+    // into one animation frame.
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const next = h > 0 ? window.scrollY / h : 0;
+      setProgress((prev) => (Math.abs(prev - next) < 0.001 ? prev : next));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  return (
+    <div style={{ height: 2, background: "transparent" }}>
+      <div
+        style={{
+          height: "100%",
+          width: progress * 100 + "%",
+          background: accent,
+          transition: "width .08s linear",
+        }}
+      />
+    </div>
+  );
+}
+
 export function Nav() {
   const { dark, setDark, accent } = useTheme();
   const { user, setAuthOpen, signOut } = useAuth();
   const { setSearchOpen } = useUIActions();
-  const [progress, setProgress] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const onScroll = () => {
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(h > 0 ? window.scrollY / h : 0);
+    // Only the 12px threshold affects the nav, so keep this state boolean and
+    // update it at most once per frame. React bails out on equal values.
+    let frame = 0;
+    const update = () => {
+      frame = 0;
       setScrolled(window.scrollY > 12);
     };
-    onScroll();
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   // Close mobile nav on resize to desktop
@@ -383,16 +432,7 @@ export function Nav() {
           </div>
         )}
 
-        <div style={{ height: 2, background: "transparent" }}>
-          <div
-            style={{
-              height: "100%",
-              width: progress * 100 + "%",
-              background: accent,
-              transition: "width .08s linear",
-            }}
-          />
-        </div>
+        <ScrollProgress accent={accent} />
       </div>
     </div>
   );

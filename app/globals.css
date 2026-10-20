@@ -112,4 +112,57 @@ a{
   }
 }
 
+/* ── Hide on mobile (CSS, so the server renders one layout) ── */
+@media (max-width: 767px) {
+  .hide-mobile { display: none !important; }
+}
+
+/* ── Catalog ── */
+.catalog {
+  padding: 60px 16px 40px;
+}
+.catalog-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.catalog-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.catalog-search {
+  flex: 1;
+}
+.catalog-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+@media (min-width: 768px) {
+  .catalog {
+    padding: 100px 28px 60px;
+  }
+  .catalog-head {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 40px;
+  }
+  .catalog-search-row {
+    width: auto;
+  }
+  .catalog-search {
+    flex: none;
+    width: 280px;
+  }
+  .catalog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
 

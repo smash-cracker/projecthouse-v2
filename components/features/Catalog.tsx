@@ -5,7 +5,6 @@ import { useTheme, useUIActions } from "../providers/ThemeProvider";
 import { useProjects } from "../providers/ProjectsProvider";
 import { CATEGORIES } from "@/lib/data";
 import { ProjectCard, ProjectCardSkeleton } from "./ProjectCard";
-import { useIsMobile } from "../../hooks/useIsMobile";
 
 function CustomSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
@@ -106,7 +105,6 @@ export function Catalog() {
   const [cat, setCat] = useState("all");
   const [sort, setSort] = useState("popular");
   const [q, setQ] = useState("");
-  const isMobile = useIsMobile();
 
   const filtered = useMemo(() => {
     let xs = projects.filter((p) => cat === "all" || p.cat === cat);
@@ -124,18 +122,9 @@ export function Catalog() {
   }, [cat, sort, q, projects]);
 
   return (
-    <section id="catalog" style={{ padding: isMobile ? "60px 16px 40px" : "100px 28px 60px" }}>
+    <section id="catalog" className="catalog">
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: isMobile ? "start" : "end",
-            justifyContent: "space-between",
-            gap: isMobile ? 20 : 40,
-            flexDirection: isMobile ? "column" : "row",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="catalog-head">
           <div>
             <div
               className="mono"
@@ -161,8 +150,9 @@ export function Catalog() {
               Projects picked for a <span style={{ fontStyle: "italic" }}>fast-changing</span> syllabus.
             </h2>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", width: isMobile ? "100%" : undefined }}>
+          <div className="catalog-search-row">
             <div
+              className="catalog-search"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -171,8 +161,6 @@ export function Catalog() {
                 borderRadius: 999,
                 padding: "8px 14px",
                 background: "var(--card)",
-                flex: isMobile ? 1 : undefined,
-                width: isMobile ? undefined : 280,
               }}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -284,18 +272,11 @@ export function Catalog() {
             Showing {filtered.length} project{filtered.length !== 1 ? "s" : ""}{" "}
             {cat !== "all" && `· ${CATEGORIES.find((x) => x.id === cat)?.label}`}
           </span>
-          {!isMobile && <span>Updated daily · next drop in 12 days</span>}
+          <span className="hide-mobile">Updated daily · next drop in 12 days</span>
         </div>
 
         {/* Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill,minmax(320px,1fr))",
-            gap: 20,
-            marginTop: 20,
-          }}
-        >
+        <div className="catalog-grid">
           {projectsLoading && Array.from({ length: 4 }).map((_, i) => (
             <ProjectCardSkeleton key={i} />
           ))}
